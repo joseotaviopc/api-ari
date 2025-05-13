@@ -1,6 +1,6 @@
 import './instrument';
 
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory, Reflector, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import {
@@ -9,6 +9,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
+import { PrismaService } from 'nestjs-prisma';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -21,11 +23,20 @@ async function bootstrap() {
     },
   });
 
+  // log query events
+  const prismaService: PrismaService = app.get(PrismaService);
+  prismaService.$on('query', (event) => {
+    console.log(event);
+  });
+
   // Use cookie parser
   app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
 
   // Swagger configuration
   const config = new DocumentBuilder()
