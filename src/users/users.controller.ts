@@ -11,7 +11,6 @@ import {
   ParseIntPipe,
   NotFoundException,
   UseGuards,
-  ConflictException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -33,12 +32,6 @@ export class UsersController {
   @Post()
   @ApiCreatedResponse({ type: UserEntity })
   async create(@Body() createUserDto: CreateUserDto) {
-    const hasUser = await this.usersService.findByEmail(createUserDto.email);
-
-    if (hasUser) {
-      throw new ConflictException('User already exists');
-    }
-
     return new UserEntity(await this.usersService.create(createUserDto));
   }
 
@@ -74,12 +67,6 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    const hasUser = await this.usersService.findOne(id);
-
-    if (!hasUser) {
-      throw new NotFoundException(`User not found with ID ${id}`);
-    }
-
     const user = await this.usersService.update(id, updateUserDto);
 
     return new UserEntity(user);
@@ -90,12 +77,6 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: UserEntity })
   async remove(@Param('id', ParseIntPipe) id: number) {
-    const hasUser = await this.usersService.findOne(id);
-
-    if (!hasUser) {
-      throw new NotFoundException(`User not found with ID ${id}`);
-    }
-
     const user = await this.usersService.remove(id);
 
     return new UserEntity(user);
