@@ -4,8 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 export class AppService {
   private readonly logger = new Logger(AppService.name);
 
-  getHello(): string {
-    this.logger.log('getHello() called');
+  getStatus(): string {
+    this.logger.log('getStatus() called');
     return 'iWebHub is running!';
   }
 
