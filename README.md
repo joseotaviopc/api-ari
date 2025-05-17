@@ -7,9 +7,9 @@
 
   <p align="center">Um framework <a href="http://nodejs.org" target="_blank">Node.js</a> progressivo para construir aplicações server-side eficientes e escaláveis.</p>
 
-# API iWebHub
+# API ARI
 
-Uma API moderna e escalável para o iWebHub, construída com NestJS, Prisma e PostgreSQL.
+Uma API moderna e escalável para o ARI, construída com NestJS, Prisma e PostgreSQL.
 
 ## Funcionalidades
 
@@ -32,8 +32,8 @@ Uma API moderna e escalável para o iWebHub, construída com NestJS, Prisma e Po
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/your-username/iwebhub.git
-   cd iwebhub
+   git clone https://github.com/your-username/ARI.git
+   cd ARI
    ```
 
 2. Instale as dependências:
