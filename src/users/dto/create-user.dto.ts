@@ -26,7 +26,7 @@ export class CreateUserDto {
     example: 'joao_silva',
   })
   // Declara a propriedade 'username' do tipo string.
-  username: string;
+  name: string;
 
   // O decorador @IsString() garante que o valor fornecido para 'email' seja uma string.
   // Para uma validação mais robusta de e-mail, @IsEmail() seria mais apropriado.

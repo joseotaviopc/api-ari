@@ -6,7 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 // Importa o CreateUserDto, que define a estrutura dos dados para criar um novo usuário.
 import { CreateUserDto } from './dto/create-user.dto';
 // Importa o UpdateUserDto, que define a estrutura dos dados para atualizar um usuário existente.
-import { UpdateUserDto } from './dto/update-user.dto';
+// import { UpdateUserDto } from './dto/update-user.dto';
 // Importa o PrismaService da biblioteca nestjs-prisma para interagir com o banco de dados através do Prisma ORM.
 import { PrismaService } from 'nestjs-prisma';
 // Importa a biblioteca bcrypt para hashing de senhas, uma prática de segurança essencial.
@@ -48,77 +48,82 @@ export class UsersService {
     const userData = {
       ...createUserDto,
       password: hashedPassword,
+      id_base: 1,
+      iduser: Math.floor(Math.random() * 1_000_000),
+      name: createUserDto.name || 'nome',
     };
 
     // Utiliza o Prisma Client para criar um novo registro de usuário no banco de dados.
     // Os dados para criação são passados através do createUserDto.
-    return await this.prisma.user.create({ data: userData });
+    const userCreated = await this.prisma.ari_users.create({ data: userData });
+
+    return userCreated;
   }
 
-  // Método assíncrono para buscar todos os usuários.
+  // // Método assíncrono para buscar todos os usuários.
   async findAll() {
     // Loga a operação de busca de todos os usuários.
     this.logger.log('Finding all users');
     // Utiliza o Prisma Client para buscar todos os registros da tabela de usuários.
-    return await this.prisma.user.findMany();
+    return await this.prisma.ari_users.findMany();
   }
 
-  // Método assíncrono para buscar um usuário específico pelo seu ID.
-  // Recebe o ID do usuário como um número.
+  // // Método assíncrono para buscar um usuário específico pelo seu ID.
+  // // Recebe o ID do usuário como um número.
   async findOne(id: number) {
     // Loga a operação de busca de usuário pelo ID.
     this.logger.log(`Finding user with ID: ${id}`);
     // Utiliza o Prisma Client para buscar um usuário único onde o ID corresponde ao fornecido.
     // Retorna o usuário encontrado ou null se nenhum usuário com esse ID existir.
-    return await this.prisma.user.findUnique({ where: { id } });
+    return await this.prisma.ari_users.findUnique({ where: { id } });
   }
 
-  // Método assíncrono para buscar um usuário específico pelo seu e-mail.
-  // Recebe o e-mail do usuário como uma string.
+  // // Método assíncrono para buscar um usuário específico pelo seu e-mail.
+  // // Recebe o e-mail do usuário como uma string.
   async findByEmail(email: string) {
     // Loga a operação de busca de usuário pelo e-mail.
     this.logger.log(`Finding user with email: ${email}`);
     // Utiliza o Prisma Client para buscar um usuário único onde o e-mail corresponde ao fornecido.
     // Retorna o usuário encontrado ou null se nenhum usuário com esse e-mail existir.
-    return await this.prisma.user.findUnique({ where: { email } });
+    return await this.prisma.ari_users.findUnique({ where: { email } });
   }
 
-  // Método assíncrono para atualizar os dados de um usuário existente.
-  // Recebe o ID do usuário a ser atualizado e um updateUserDto com os novos dados.
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    // Loga o início da operação de atualização de usuário.
-    this.logger.log(`Updating user with ID: ${id}`);
+  // // Método assíncrono para atualizar os dados de um usuário existente.
+  // // Recebe o ID do usuário a ser atualizado e um updateUserDto com os novos dados.
+  // async update(id: number, updateUserDto: UpdateUserDto) {
+  //   // Loga o início da operação de atualização de usuário.
+  //   this.logger.log(`Updating user with ID: ${id}`);
 
-    // Cria uma cópia do DTO para evitar mutação do objeto original.
-    // Especifique o tipo para dataToUpdate para incluir a propriedade password opcional.
-    const dataToUpdate: Partial<UpdateUserDto> & { password?: string } = {
-      ...updateUserDto,
-    };
+  //   // Cria uma cópia do DTO para evitar mutação do objeto original.
+  //   // Especifique o tipo para dataToUpdate para incluir a propriedade password opcional.
+  //   const dataToUpdate: Partial<UpdateUserDto> & { password?: string } = {
+  //     ...updateUserDto,
+  //   };
 
-    // Verifica se uma nova senha foi fornecida no DTO de atualização.
-    if (updateUserDto.password) {
-      // Se uma nova senha foi fornecida, gera o hash dela antes de salvar.
-      dataToUpdate.password = await bcrypt.hash(
-        updateUserDto.password,
-        roundsOfHashing,
-      );
-    }
-    // Utiliza o Prisma Client para atualizar o registro do usuário no banco de dados.
-    // 'where: { id }' especifica qual usuário atualizar.
-    // 'data: dataToUpdate' fornece os novos dados.
-    // O Prisma lançará uma exceção (ex: PrismaClientKnownRequestError com código P2025)
-    // se nenhum usuário com o ID fornecido for encontrado.
-    return await this.prisma.user.update({ where: { id }, data: dataToUpdate });
-  }
+  //   // Verifica se uma nova senha foi fornecida no DTO de atualização.
+  //   if (updateUserDto.password) {
+  //     // Se uma nova senha foi fornecida, gera o hash dela antes de salvar.
+  //     dataToUpdate.password = await bcrypt.hash(
+  //       updateUserDto.password,
+  //       roundsOfHashing,
+  //     );
+  //   }
+  //   // Utiliza o Prisma Client para atualizar o registro do usuário no banco de dados.
+  //   // 'where: { id }' especifica qual usuário atualizar.
+  //   // 'data: dataToUpdate' fornece os novos dados.
+  //   // O Prisma lançará uma exceção (ex: PrismaClientKnownRequestError com código P2025)
+  //   // se nenhum usuário com o ID fornecido for encontrado.
+  //   return await this.prisma.user.update({ where: { id }, data: dataToUpdate });
+  // }
 
-  // Método assíncrono para remover um usuário do banco de dados.
-  // Recebe o ID do usuário a ser removido.
-  async remove(id: number) {
-    // Loga a operação de remoção de usuário.
-    this.logger.log(`Removing user with ID: ${id}`);
-    // Utiliza o Prisma Client para deletar o registro do usuário.
-    // 'where: { id }' especifica qual usuário deletar.
-    // O Prisma lançará uma exceção se o usuário não for encontrado.
-    return await this.prisma.user.delete({ where: { id } });
-  }
+  // // Método assíncrono para remover um usuário do banco de dados.
+  // // Recebe o ID do usuário a ser removido.
+  // async remove(id: number) {
+  //   // Loga a operação de remoção de usuário.
+  //   this.logger.log(`Removing user with ID: ${id}`);
+  //   // Utiliza o Prisma Client para deletar o registro do usuário.
+  //   // 'where: { id }' especifica qual usuário deletar.
+  //   // O Prisma lançará uma exceção se o usuário não for encontrado.
+  //   return await this.prisma.user.delete({ where: { id } });
+  // }
 }

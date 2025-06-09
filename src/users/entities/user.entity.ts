@@ -2,7 +2,7 @@
 // Importa o decorador ApiProperty do Swagger para documentar as propriedades da entidade na API.
 import { ApiProperty } from '@nestjs/swagger';
 // Importa o tipo User do Prisma Client. Este tipo representa a estrutura de um usuário no banco de dados.
-import { User } from '@prisma/client';
+// import { User } from '@prisma/client';
 // Importa o decorador Exclude da biblioteca class-transformer.
 // Este decorador é usado para omitir propriedades ao transformar a classe em um objeto JSON (ex: em respostas de API).
 import { Exclude } from 'class-transformer';
@@ -10,7 +10,7 @@ import { Exclude } from 'class-transformer';
 // Define a classe UserEntity.
 // Esta classe implementa a interface User do Prisma, garantindo que ela tenha todas as propriedades de um usuário do banco de dados.
 // UserEntity é usada para representar usuários nas respostas da API, permitindo controle sobre quais dados são expostos.
-export class UserEntity implements User {
+export class UserEntity {
   // O construtor permite criar uma instância de UserEntity a partir de um objeto parcial.
   // Object.assign(this, partial) copia as propriedades do objeto 'partial' para a nova instância de UserEntity.
   // Isso é útil para converter objetos de usuário do Prisma (ou DTOs) em instâncias de UserEntity.
