@@ -9,15 +9,18 @@ import { AppController } from './app.controller';
 // Importa o AppService, serviço principal com a lógica de negócios da aplicação.
 import { AppService } from './app.service';
 // Importa APP_FILTER, um token para registrar filtros globais de exceção.
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 // Importa SentryGlobalFilter, um filtro global para capturar exceções e enviá-las ao Sentry.
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 // Importa o AuthModule, módulo responsável pela autenticação.
 import { AuthModule } from './auth/auth.module';
 // Importa o UsersModule, módulo responsável pela gestão de usuários.
-import { UsersModule } from './users/users.module';
+// import { UsersModule } from './users/users.module';
 // Importa o PrismaModule da biblioteca nestjs-prisma para integração com o Prisma ORM.
 import { PrismaModule } from 'nestjs-prisma';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+// import { ClienteModule } from './cliente/cliente.module';
+import { BasesModule } from './bases/bases.module';
 // Importa o ClienteModule, módulo responsável pela gestão de clientes.
 // import { ClienteModule } from './cliente/cliente.module';
 
@@ -38,7 +41,9 @@ import { PrismaModule } from 'nestjs-prisma';
     // Importa o AuthModule para funcionalidades de autenticação.
     AuthModule,
     // Importa o UsersModule para funcionalidades relacionadas a usuários.
-    UsersModule,
+    // UsersModule,
+    // Importa o ClienteModule para funcionalidades relacionadas a clientes.
+    // ClienteModule,
     // Configura o PrismaModule para integração com o banco de dados via Prisma.
     PrismaModule.forRoot({
       isGlobal: true, // Torna o PrismaService (e o PrismaClient) disponível globalmente.
@@ -60,6 +65,16 @@ import { PrismaModule } from 'nestjs-prisma';
         },
       },
     }),
+    // Configura o ThrottlerModule para controle de taxa de requisições.
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 5_000,
+          limit: 5,
+        },
+      ],
+    }),
+    BasesModule,
     // Importa o ClienteModule para funcionalidades relacionadas a clientes.
     // ClienteModule,
   ],
@@ -74,6 +89,10 @@ import { PrismaModule } from 'nestjs-prisma';
       provide: APP_FILTER, // Utiliza o token APP_FILTER para registrar o filtro globalmente.
       useClass: SentryGlobalFilter, // Usa SentryGlobalFilter para capturar todas as exceções não tratadas
       // e enviá-las para o Sentry.
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     // Registra o AppService como um provedor neste módulo.
     AppService,

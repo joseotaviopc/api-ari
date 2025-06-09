@@ -4,7 +4,7 @@
 // Body: Extrai o corpo da requisição.
 // Controller: Define a classe como um controlador, agrupando rotas relacionadas.
 // Post: Define um método como um manipulador de requisições HTTP POST.
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 // Importa o AuthService, que contém a lógica de negócios para autenticação.
 import { AuthService } from './auth.service';
 // Importa decoradores do Swagger para documentação da API.
@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 // ApiTags: Agrupa endpoints na documentação do Swagger.
 // ApiUnauthorizedResponse: Documenta uma resposta 401 (Não Autorizado).
 import {
+  ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
@@ -22,6 +23,7 @@ import {
 import { AuthEntity } from './entity/auth.entity';
 // Importa o LoginDto (Data Transfer Object), que define a estrutura dos dados esperados no corpo da requisição de login.
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 // O decorador @Controller('auth') define que este controlador manipulará requisições para o caminho base '/auth'.
 // Ex: /auth/login
@@ -36,6 +38,7 @@ export class AuthController {
 
   // O decorador @Post('login') define que este método manipulará requisições HTTP POST para o caminho '/auth/login'.
   @Post('login')
+  @HttpCode(200)
   // @ApiOkResponse({ type: AuthEntity }) documenta que uma resposta bem-sucedida (200 OK) retornará um objeto do tipo AuthEntity.
   @ApiOkResponse({ type: AuthEntity })
   // @ApiUnauthorizedResponse() documenta que uma resposta 401 (Não Autorizado) pode ser retornada (ex: senha inválida).
@@ -49,5 +52,12 @@ export class AuthController {
     // Chama o método login do AuthService, passando o email e a senha.
     // Retorna o resultado da operação de login (geralmente um token de acesso).
     return this.authService.login(email, password);
+  }
+
+  @Post('register')
+  @ApiOkResponse({ type: AuthEntity })
+  @ApiBadRequestResponse({ description: 'Usuário já existe.' })
+  register(@Body() { email, password, name }: RegisterDto) {
+    return this.authService.register(email, password, name);
   }
 }

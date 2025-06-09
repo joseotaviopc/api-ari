@@ -85,6 +85,7 @@ describe('AppController', () => {
       try {
         appController.getError();
       } catch (error) {
+        console.log(error);
         // O erro é esperado, então podemos continuar.
       }
       // Verifica se o spy (getErrorSpy) foi chamado.

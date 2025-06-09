@@ -42,13 +42,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: { userId: number }) {
     // Busca o usuário no banco de dados usando o userId extraído do payload do JWT.
     const user = await this.usersService.findOne(payload.userId);
-
     // Se nenhum usuário for encontrado com o ID do payload, lança uma UnauthorizedException.
     // Isso significa que o token é válido (assinatura correta), mas o usuário associado a ele não existe mais.
     if (!user) {
       throw new UnauthorizedException();
     }
-
     // Se o usuário for encontrado, ele é retornado.
     // O Passport irá então anexar este objeto 'user' ao objeto 'request' da requisição.
     return user;

@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser'; // Middleware para parsear cookies.
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter'; // Filtro para tratar exceções do Prisma.
-import { PrismaService } from 'nestjs-prisma'; // Serviço do Prisma para interagir com o banco de dados.
+// import { PrismaService } from 'nestjs-prisma'; // Serviço do Prisma para interagir com o banco de dados.
 
 // Função assíncrona principal que inicializa e configura a aplicação NestJS.
 async function bootstrap() {
@@ -39,12 +39,12 @@ async function bootstrap() {
   });
 
   // Obtém a instância do PrismaService para configurar o log de queries.
-  const prismaService: PrismaService = app.get(PrismaService);
+  // const prismaService: PrismaService = app.get(PrismaService);
   // Registra um listener para o evento 'query' do Prisma.
   // Isso loga todas as queries executadas pelo Prisma no console. Útil para debugging.
-  prismaService.$on('query', (event) => {
-    console.log(event);
-  });
+  // prismaService.$on('query', (event) => {
+  //   console.log(event);
+  // });
 
   // Adiciona o middleware cookie-parser para habilitar o parsing de cookies das requisições.
   app.use(cookieParser());
