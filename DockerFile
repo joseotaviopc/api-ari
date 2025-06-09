@@ -1,0 +1,36 @@
+# Etapa de build
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copia arquivos de dependências e instala tudo (inclui devDeps p/ build)
+COPY package*.json ./
+RUN npm install
+
+# Copia o código
+COPY . .
+
+# Compila o projeto (gera dist/)
+RUN npm run build
+
+# Etapa final (imagem mais limpa)
+FROM node:20-alpine AS prod
+
+WORKDIR /app
+
+# Apenas prod deps
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Copia apenas a build e os arquivos necessários
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+
+# Se tiveres algum config (ex: .env, ecosystem.config.js, etc), copia também
+COPY --from=builder /app/package.json ./
+
+# Expõe a porta do Nest
+EXPOSE 3000
+
+# Roda a build
+CMD ["node", "dist/main"]
