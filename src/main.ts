@@ -79,11 +79,12 @@ async function bootstrap() {
   // Define a porta em que a aplicação irá rodar.
   // Utiliza a variável de ambiente PORT, ou 3000 como padrão.
   const port = process.env.PORT || 3000;
+  const host = process.env.HOST || '0.0.0.0';
   // Inicia o servidor HTTP e o faz escutar na porta definida.
-  await app.listen(port);
+  await app.listen(port, host);
   // Loga mensagens no console indicando que a aplicação está rodando e onde acessar o Swagger.
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger is running on: http://localhost:${port}/api`);
+  console.log(`Application is running on ${host}:${port}`);
+  console.log(`Swagger is running on: http://${host}:${port}/api`);
 }
 
 // Chama a função bootstrap para iniciar a aplicação.
