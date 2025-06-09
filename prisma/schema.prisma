@@ -1,25 +1,3075 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  email     String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ari_users {
+  id            Int       @id @default(autoincrement())
+  id_base       Int
+  iduser        Int
+  email         String    @unique(map: "email") @db.VarChar(255)
+  password      String    @db.VarChar(255)
+  name          String    @db.VarChar(255)
+  role          String?   @default("user") @db.VarChar(50)
+  permissions   Json?
+  last_access   DateTime? @db.Timestamp(0)
+  access_count  Int?      @default(0)
+  refresh_token String?   @db.VarChar(500)
+  preferences   Json?
+  theme         String?   @default("light") @db.VarChar(20)
+  language      String?   @default("pt-BR") @db.VarChar(10)
+  active        Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+  updated_at    DateTime? @default(now()) @db.Timestamp(0)
+
+  @@unique([id_base, iduser], map: "uk_base_user")
+  @@index([active], map: "idx_active")
+  @@index([email], map: "idx_email")
+  @@index([last_access], map: "idx_last_access")
+  @@index([role], map: "idx_role")
+}
+
+model ari_usuario_configuracoes {
+  id                     BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  usuarioId              BigInt    @db.UnsignedBigInt
+  periodoDashboard       Int?      @default(30)
+  periodoRelatorios      Int?      @default(90)
+  periodoAnalitico       Int?      @default(30)
+  periodoMaximo          Int?      @default(365)
+  limitDashboard         Int?      @default(10)
+  limitProdutos          Int?      @default(20)
+  limitVendedores        Int?      @default(15)
+  limitClientes          Int?      @default(100)
+  limitMaximo            Int?      @default(1000)
+  cacheDashboard         Int?      @default(900)
+  cacheVendas            Int?      @default(1800)
+  cacheProdutos          Int?      @default(3600)
+  cacheClientes          Int?      @default(7200)
+  cacheRelatorios        Int?      @default(14400)
+  timeoutQuery           Int?      @default(120000)
+  cacheHabilitado        Boolean?  @default(true)
+  otimizacoesHabilitadas Boolean?  @default(true)
+  preferencasEditor      Json?
+  permissoes             Json?
+  criadoEm               DateTime? @default(now()) @db.Timestamp(0)
+  atualizadoEm           DateTime? @default(now()) @db.Timestamp(0)
+  users                  users     @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ari_usuario_configuracoes_ibfk_1")
+
+  @@index([usuarioId], map: "usuarioId")
+}
+
+model base {
+  ID_BASE  Int     @id
+  NOME     String  @db.VarChar(50)
+  BASE     String  @db.VarChar(30)
+  TOKEN    String? @db.VarChar(255)
+  SRV      Int     @db.TinyInt
+  WA_PAUSA Int     @default(0) @db.UnsignedTinyInt
+  FG_WH    Int     @default(0) @db.UnsignedTinyInt
+}
+
+model co_fornecedor {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_PESSOA        Int
+  ID_CLASSE        Int?
+  FG_ATIVO         String?   @default("S") @db.Char(1)
+  CODIGO           String?   @db.VarChar(10)
+  ATUALIZARECEB    String?   @default("N") @db.Char(1)
+  TIPOFRETE        String?   @db.Char(1)
+  GERACOMPRA       String?   @default("N") @db.Char(1)
+  FABDISTR         String?   @db.Char(1)
+  IPI              Decimal?  @db.Decimal(15, 2)
+  FG_GERACOMPRA    String?   @default("N") @db.Char(1)
+  ID_RAMO          Int?
+  VR_PRECO         Decimal?  @db.Decimal(15, 2)
+  DIA_SEMANA_PAGTO Int?
+  VR_FRETE         Decimal?  @db.Decimal(15, 2)
+  UID_FRN          Int?      @db.SmallInt
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model co_nota {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_COMPRA       Int
+  DT_LCTO         DateTime  @db.Timestamp(0)
+  ID_EMPRESA      Int
+  ID_FORNEC       Int
+  ID_TRANSP       Int?
+  FG_FINANCEIRO   String    @db.Char(1)
+  FG_ESTOQUE      String    @db.Char(1)
+  DT_NOTA         DateTime  @db.Timestamp(0)
+  SR_NOTA         String?   @db.VarChar(3)
+  NR_NOTA         String    @db.VarChar(9)
+  NR_FRETE        String?   @db.VarChar(9)
+  VR_NOTA         Float
+  ARQXML          String?   @db.VarChar(80)
+  PESOLIQUIDO     Float?    @default(0)
+  ID_CONDICAO     Int?
+  ID_CLASSE       Int?
+  ID_TIPO_ESTOQUE Int?
+  ID_TIPO_DOC     Int?
+  BASE_ICMS       Decimal?  @db.Decimal(15, 2)
+  VR_ICMS         Decimal?  @db.Decimal(15, 2)
+  BASE_SUBS       Decimal?  @db.Decimal(15, 2)
+  VR_SUBS         Decimal?  @db.Decimal(15, 2)
+  VR_IPI          Decimal?  @db.Decimal(15, 2)
+  VR_ITENS        Decimal?  @db.Decimal(15, 2)
+  VR_FRETE        Decimal?  @db.Decimal(15, 2)
+  VR_DESPESA      Decimal?  @db.Decimal(15, 2)
+  VR_DESCONTO     Decimal?  @db.Decimal(15, 2)
+  FG_DESCONTO     String    @default("S") @db.Char(1)
+  FG_ST           String    @default("S") @db.Char(1)
+  CHAVE           String?   @db.VarChar(50)
+  ID_TIPOES_FIS   Int?
+  VR_NFFRETE      Decimal?  @db.Decimal(15, 2)
+  FG_EFETIVADA    String    @default("N") @db.Char(1)
+  SR_FRETE        String?   @db.VarChar(2)
+  DT_FRETE        DateTime? @db.Timestamp(0)
+  CFOP_FRETE      String?   @db.VarChar(4)
+  VCTO_FRETE      DateTime? @db.Timestamp(0)
+  ALIQ_ICMFRETE   Decimal?  @db.Decimal(15, 2)
+  VR_ICMFRETE     Decimal?  @db.Decimal(15, 2)
+  PESOCARGA       Decimal?  @db.Decimal(15, 2)
+  FG_CALCFRETE    String?   @db.Char(1)
+  DOCUMENTO_FRETE String?   @db.VarChar(9)
+  REGIME          String?   @db.Char(1)
+  OBS             String?   @db.Text
+  FN_ATIVO        String?   @default("S") @db.Char(1)
+  FG_TROCAANT     String    @default("N") @db.Char(1)
+  FG_PRODUTO      String    @default("N") @db.Char(1)
+  USUARIO         String?   @db.VarChar(15)
+  USUARIO_EFT     String?   @db.VarChar(15)
+  DT_EFETIVACAO   DateTime? @db.Timestamp(0)
+  MODELO_NF       String    @default("55") @db.VarChar(2)
+  ID_CONTA        Int?
+  VR_ICMSDESON    Decimal?  @db.Decimal(15, 2)
+  VR_II           Decimal?  @db.Decimal(15, 2)
+  VR_FCP          Decimal?  @db.Decimal(15, 2)
+  VR_FCPST        Decimal?  @db.Decimal(15, 2)
+  VR_FCPSTRET     Decimal?  @db.Decimal(15, 2)
+  VR_PIS          Decimal?  @db.Decimal(15, 2)
+  VR_COFINS       Decimal?  @db.Decimal(15, 2)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_COMPRA])
+}
+
+model co_nota_itens {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_REG        BigInt
+  ID_COMPRA     Int
+  ID_PRODUTO    Int?
+  QUANTIDADE    Float
+  VR_UNITARIO   Float
+  VR_TOTAL      Float
+  CODFOR        String?   @db.VarChar(30)
+  DESCRICAO     String?   @db.VarChar(120)
+  UNIDADE       String    @default("UN") @db.VarChar(6)
+  NCM           String?   @db.VarChar(8)
+  ID_LANCTO_EST BigInt?
+  ID_LANCTO_FIS BigInt?
+  PERTRIB       Float?    @default(100)
+  BASE_ICM      Decimal?  @db.Decimal(15, 2)
+  VR_ICM        Decimal?  @db.Decimal(15, 2)
+  ALIQ_ICM      Decimal?  @db.Decimal(15, 2)
+  ISEN_ICM      Decimal?  @db.Decimal(15, 2)
+  OUTR_ICM      Decimal?  @db.Decimal(15, 2)
+  VR_IPI        Decimal?  @db.Decimal(15, 2)
+  ALIQ_IPI      Decimal?  @db.Decimal(15, 2)
+  VR_FRETE      Decimal?  @db.Decimal(15, 2)
+  VR_DESPESA    Decimal?  @db.Decimal(15, 2)
+  VR_DESCONTO   Decimal?  @db.Decimal(15, 2)
+  BASE_ST       Decimal?  @db.Decimal(15, 2)
+  VR_ST         Decimal?  @db.Decimal(15, 2)
+  MARGEM_ST     Decimal?  @db.Decimal(15, 2)
+  ALIQ_ST       Decimal?  @db.Decimal(15, 2)
+  CFT           String    @db.VarChar(3)
+  CFO           String    @db.VarChar(4)
+  PRECO_VENDA   Float
+  ID_EMBALAGEM  Int?
+  EMB_QTD       Decimal?  @db.Decimal(15, 2)
+  EMB_PCTOTAL   Decimal?  @db.Decimal(15, 2)
+  IND_DIVISAO   Int?
+  ID_CTRLENTE   Int?
+  CODBAR        String?   @db.VarChar(20)
+  REGRAP        String?   @db.VarChar(1)
+  ID_PROFOR     BigInt?
+  QTD_SAI       Float     @default(0)
+  BASE_FCPST    Decimal?  @db.Decimal(15, 2)
+  ALIQ_FCPST    Decimal?  @db.Decimal(15, 2)
+  VR_FCPST      Decimal?  @db.Decimal(15, 2)
+  MOTDESICMS    Int?      @db.SmallInt
+  BASE_FCP      Decimal?  @db.Decimal(15, 2)
+  ALIQ_FCP      Decimal?  @db.Decimal(15, 2)
+  VR_FCP        Decimal?  @db.Decimal(15, 2)
+  XPED          String?   @db.VarChar(15)
+  NITEMPED      Int?      @db.SmallInt
+  CBENEF        String?   @db.VarChar(8)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model co_nota_parcs {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_REG     BigInt
+  ID_COMPRA  Int
+  TITULO     String    @db.VarChar(25)
+  VENCIMENTO DateTime  @db.Timestamp(0)
+  VALOR      Float
+  ID_PAGAR   Int?
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model co_nsu {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_NSU     BigInt
+  DT_LCTO    DateTime  @db.Timestamp(0)
+  DT_NOTA    DateTime  @db.Timestamp(0)
+  ID_EMPRESA Int
+  ID_FORNEC  Int?
+  NR_NOTA    String    @db.VarChar(9)
+  VR_NOTA    Float
+  CHAVE      String    @db.VarChar(50)
+  ID_COMPRA  Int?
+  FG_COMPRA  DateTime? @db.Timestamp(0)
+  FG_VISTO   DateTime? @db.Timestamp(0)
+  SR_NOTA    String?   @db.VarChar(3)
+  CNPJ_CPF   String?   @db.VarChar(14)
+  TPNF       Int?
+  DHRECEBTO  DateTime? @db.Timestamp(0)
+  CSITNFE    Int?
+  NSU        Int?
+  FG_NFE     DateTime? @db.Timestamp(0)
+  FG_DFE     DateTime? @db.Timestamp(0)
+  NPROT      String?   @db.VarChar(20)
+  DIGVAL     String?   @db.VarChar(100)
+  IE         String?   @db.VarChar(18)
+  NOME       String?   @db.VarChar(100)
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_NSU])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model courier {
+  ID_COURIER     BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  ID_BASE        Int
+  ID_EMPRESA     Int
+  ID_PESSOA      Int?
+  FG_WA          Int?      @db.TinyInt
+  ID_MODELO      Int?
+  API_WAPP       Int       @db.TinyInt
+  WA_ID          String?   @db.VarChar(100)
+  WA_TK          String?   @db.VarChar(100)
+  USUARIO        String    @db.VarChar(15)
+  NOME           String?   @db.VarChar(100)
+  TP_MSG         String    @db.VarChar(10)
+  TP_CHAT        String    @db.VarChar(15)
+  DT_CRIACAO     DateTime  @db.Timestamp(0)
+  DT_AGENDAMENTO DateTime  @db.Timestamp(0)
+  DT_ENVIO       DateTime? @db.Timestamp(0)
+  FG_ERRO        Int?      @db.SmallInt
+  DT_DELIV       DateTime? @db.Timestamp(0)
+  DT_READ        DateTime? @db.Timestamp(0)
+  FG_TESTE       Int       @default(0) @db.TinyInt
+  MSG_ID         String?   @db.VarChar(100)
+  DESTINO        String    @db.VarChar(300)
+  MSG            String?   @db.VarChar(100)
+  URL            String?   @db.VarChar(300)
+  RESULTADOR     String?   @db.VarChar(121)
+  TITLE          String?   @db.LongText
+  URLB           Bytes?
+  MENSAGEM       String?   @db.LongText
+  RESULTADO      String?   @db.LongText
+  FOOTER         String?   @db.LongText
+  TPFILE         String?   @db.VarChar(1)
+  FG_BTN         Int?      @db.TinyInt
+  ID_NPS         BigInt?   @db.UnsignedBigInt
+
+  @@index([MSG_ID], map: "courier_MSG_ID_IDX")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model courier_nps {
+  ID_NPS    BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  UID_NPS   String?   @db.VarChar(50)
+  ID_NDB    BigInt?   @db.UnsignedBigInt
+  DT_NPS    DateTime  @default(now()) @db.Timestamp(0)
+  OBS       String?   @db.LongText
+  NPS_OPCAO Int?      @db.UnsignedTinyInt
+  NPS       Decimal?  @db.Decimal(9, 2)
+  FG_RESP   Int?      @db.UnsignedInt
+  NPS_F     Int       @db.UnsignedTinyInt
+  NPS_L     Int       @db.UnsignedTinyInt
+  FG_GMN    Int       @default(0) @db.UnsignedTinyInt
+  SHORTURL  String?   @db.VarChar(40)
+  ID_URL    String?   @db.VarChar(40)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+  FG_EXC    DateTime? @db.Timestamp(0)
+}
+
+model datafeeds {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  label        String?   @db.VarChar(255)
+  data         Float?
+  dataset_name Int?      @db.TinyInt
+  data_type    Int       @default(1) @db.TinyInt
+  created_at   DateTime? @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+}
+
+model empresa {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  nome       String    @db.VarChar(255)
+  base       String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model es_atributo {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_ATRIBUTO Int
+  ID_GRUPO    Int
+  DESCRICAO   String    @db.VarChar(30)
+  ID_OPOSTOS  String?   @db.Text
+  FG_PADRAO   String    @default("N") @db.Char(1)
+  ID_TPATR    Int?
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ATRIBUTO])
+}
+
+model es_cest {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  CEST      String    @db.VarChar(7)
+  DESCRICAO String    @db.VarChar(600)
+  ID_CEST   Int
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CEST])
+}
+
+model es_cor {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_COR    Int
+  DESCRICAO String    @db.VarChar(30)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_COR])
+}
+
+model es_estilo {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_ESTILO Int
+  DESCRICAO String    @db.VarChar(20)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ESTILO])
+}
+
+model es_evolucao {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_EVOLUCAO      Int
+  ID_PRODUTO       Int
+  PRECO_COMPRA     Float
+  PRECO_VENDA      Float
+  DT_ALTERACAO     DateTime  @db.Timestamp(0)
+  PRECO_COMPRA_OLD Decimal?  @db.Decimal(15, 2)
+  PRECO_VENDA_OLD  Decimal?  @db.Decimal(15, 2)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_EVOLUCAO])
+}
+
+model es_fabricante {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_FABRICANTE Int
+  DESCRICAO     String    @db.VarChar(40)
+  LID_FAB       Int?      @db.SmallInt
+  ID_PESSOA     Int?
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_FABRICANTE])
+}
+
+model es_grupo {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_GRUPO       Int
+  DESCRICAO      String    @db.VarChar(30)
+  IMAGEM         Bytes?    @db.Blob
+  NCM            String?   @db.VarChar(8)
+  ID_GRUPO_WEB   Int?
+  LID_GRP        Int?      @db.SmallInt
+  UID_GRUPO_WEB  String?   @db.VarChar(50)
+  PDESC          String?   @db.VarChar(20)
+  PTIPO          String    @default("") @db.Char(1)
+  FG_RFID        String    @default("N") @db.Char(1)
+  DT_LUPD        DateTime? @db.Timestamp(0)
+  P_CASHBACK     Float?
+  VALIDADE_CASHB Int?      @db.SmallInt
+
+  @@id([ID_BASE, ID_GRUPO])
+}
+
+model es_marca {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_MARCA      Int
+  DESCRICAO     String    @db.VarChar(40)
+  COMISSAO      Decimal?  @db.Decimal(15, 2)
+  ID_FORNEC     Int?
+  REFFRN        String?   @db.VarChar(30)
+  CAMPO         String?   @db.Char(1)
+  ID_GENERIC    Int?
+  ID_FABRICANTE Int       @default(1)
+  OBS           String?   @db.VarChar(500)
+  FATORM        Float?    @default(1)
+  ID_REF        Int?
+  UID_FAB       Int?      @db.SmallInt
+  UID_MOD       Int?      @db.SmallInt
+  LID_FAB       Int?      @db.SmallInt
+  UID_FRN       Int?      @db.SmallInt
+  UID_MARCA     Int?      @db.SmallInt
+  DT_LUPD       DateTime? @db.Timestamp(0)
+  F_CASHBACK    Float?
+
+  @@id([ID_BASE, ID_MARCA])
+}
+
+model es_material {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_MATERIAL   Int
+  DESCRICAO     String    @db.VarChar(40)
+  NCM           String?   @db.VarChar(8)
+  LID_FAB       Int?      @db.SmallInt
+  LID_MAT       Int?      @db.SmallInt
+  ID_FABRICANTE Int       @default(1)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MATERIAL])
+}
+
+model es_modelo {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_MODELO     Int
+  DESCRICAO     String    @db.VarChar(80)
+  ID_FABRICANTE Int       @default(1)
+  ID_GRUPO      Int       @default(1)
+  NCM           String?   @db.VarChar(8)
+  IR            Decimal?  @db.Decimal(15, 2)
+  EIX_MIN       Int?
+  EIX_MAX       Int?
+  ADI_MIN       Decimal?  @db.Decimal(15, 2)
+  ADI_MAX       Decimal?  @db.Decimal(15, 2)
+  ALT_MIN       Decimal?  @db.Decimal(15, 2)
+  ALT_MAX       Decimal?  @db.Decimal(15, 2)
+  ESF_MIN       Decimal?  @db.Decimal(15, 2)
+  ESF_MAX       Decimal?  @db.Decimal(15, 2)
+  CIL_MIN       Decimal?  @db.Decimal(15, 2)
+  CIL_MAX       Decimal?  @db.Decimal(15, 2)
+  OBS_SHORT     String?   @db.VarChar(60)
+  OBS           String?   @db.VarChar(500)
+  ID_MARCA      Int
+  ID_ORD        Int       @default(0)
+  LID_FAB       Int?      @db.SmallInt
+  LID_MOD       Int?      @db.SmallInt
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MODELO])
+}
+
+model es_movimento {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_MOVIMENTO    BigInt
+  ID_EMPRESA      Int
+  DT_MOVIMENTO    DateTime  @db.Timestamp(0)
+  ID_TIPO_MOV     Int
+  TIPO_MOV        String    @db.Char(1)
+  ID_PRODUTO      Int
+  ID_TIPO_ESTOQUE Int
+  ID_PESSOA       Int?
+  DOCUMENTO       String?   @db.VarChar(15)
+  USUARIO         String    @db.VarChar(15)
+  FG_ORIGEM       String?   @db.VarChar(3)
+  ID_ORIGEM       BigInt?
+  DT_LANCAMENTO   DateTime? @db.Timestamp(0)
+  MUDACUSTO       String    @db.Char(1)
+  QUANTIDADE      Float
+  VR_TOTAL        Float
+  QUANT_EST       Float
+  VALOR_EST       Float
+  CUSTO           Float
+  ID_GRADE        Int?
+  OBS             String?   @db.VarChar(100)
+  ID_PRODUCAO     Int?
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MOVIMENTO])
+}
+
+model es_ncm {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  NCM        String    @db.VarChar(8)
+  ALIQNAC    Float     @default(0)
+  ALIQIMP    Float     @default(0)
+  DESCRICAO  String?   @db.VarChar(500)
+  EXCECAO    String?   @db.VarChar(2)
+  TABELA     String?   @db.Char(1)
+  NF_DESC    String?   @default("") @db.VarChar(50)
+  ALIQEST    Float?    @default(0)
+  ALIQMUN    Float?    @default(0)
+  IBPT_DESC  String?   @default("") @db.VarChar(500)
+  IBPT_CHAVE String?   @default("") @db.VarChar(10)
+  CEST       String?   @db.VarChar(7)
+  ID_NCM     Int
+  CBENEF     String?   @db.VarChar(8)
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_NCM])
+}
+
+model es_preco_empresa {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_PRODUTO     Int
+  ID_EMPRESA     Int
+  PRECO_VENDA    Float     @default(0)
+  PRECO_PROMOCAO Float?    @default(0)
+  PRECO_ATACADO  Float?    @default(0)
+  DT_TROCA       DateTime? @db.Date
+  ID_REG         Int
+  DT_ULT_CMP     DateTime? @db.Timestamp(0)
+  PRECO_COMPRA   Decimal?  @db.Decimal(15, 2)
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model es_proatrib {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_PRODUTO  Int
+  ID_ATRIBUTO Int
+  ID_REG      Int
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model es_produto {
+  ID_BASE             Int
+  BASE                String    @db.VarChar(30)
+  ID_EMPRESA          Int?
+  ID_PRODUTO          Int
+  CODFAB              String?   @db.VarChar(60)
+  DESCRICAO           String    @db.VarChar(120)
+  ID_GRUPO            Int
+  ID_MARCA            Int?
+  ATIVO               String    @default("S") @db.Char(1)
+  BLOQUEADO           String    @default("N") @db.Char(1)
+  CODIGO_BARRAS       String?   @db.VarChar(20)
+  CODIGO_FISCAL       String?   @db.VarChar(16)
+  MARCADO             String    @default("N") @db.Char(1)
+  DT_CADASTRO         DateTime? @db.DateTime(0)
+  PRECO_COMPRA        Float     @default(0)
+  PRECO_VENDA         Float     @default(0)
+  ABREVIATURA         String?   @db.VarChar(40)
+  ID_GRADE_TIPO       Int?
+  ID_UNIDADE          String    @default("UN") @db.VarChar(6)
+  ID_ARTIGO_FISCAL    Int?
+  DESCONTO_MAX        Float?    @default(0)
+  COMISSAO            Decimal?  @db.Decimal(15, 2)
+  EMB_COMPRA          Int?      @default(1)
+  EMB_VENDA           Int?      @default(1)
+  LOCALIZACAO         String?   @db.VarChar(8)
+  ID_TIPO_EST_ENTRADA Int?
+  ID_TIPO_EST_SAIDA   Int?
+  ID_FORNECEDOR       Int?
+  ID_MOEDA            Int?
+  PRECO_PROMOCAO      Decimal?  @db.Decimal(15, 2)
+  SALDOESTOQUE        Decimal?  @db.Decimal(15, 2)
+  VALORESTOQUE        Decimal?  @db.Decimal(15, 2)
+  CUSTOMEDIO          Decimal?  @db.Decimal(15, 2)
+  C_SALDOESTOQUE      Decimal?  @db.Decimal(15, 2)
+  C_VALORESTOQUE      Decimal?  @db.Decimal(15, 2)
+  C_CUSTOMEDIO        Decimal?  @db.Decimal(15, 2)
+  CFT                 String?   @default("000") @db.VarChar(3)
+  PERTRIB             Decimal?  @db.Decimal(15, 2)
+  ALIQICMS            Decimal?  @db.Decimal(15, 2)
+  ALIQIPI             Decimal?  @db.Decimal(15, 2)
+  ALIQSUBS            Decimal?  @db.Decimal(15, 2)
+  ISENTO_PISCOFINS    String?   @default("N") @db.Char(1)
+  TECLAASSOCIADA      Decimal?  @db.Decimal(15, 2)
+  DIASVALIDADE        Decimal?  @db.Decimal(15, 2)
+  EXPBALANCA          String?   @default("N") @db.Char(1)
+  ESTOQ_MIN           Decimal?  @db.Decimal(15, 2)
+  ESTOQ_MAX           Decimal?  @db.Decimal(15, 2)
+  DESPESAS            Float?    @default(0)
+  CSTPIS              String?   @db.VarChar(2)
+  CSTCOFINS           String?   @db.VarChar(2)
+  CSTIPI              String?   @db.VarChar(2)
+  CSOSN               String?   @db.VarChar(3)
+  ORIGEM              String?   @db.Char(1)
+  MODICM              String?   @db.Char(1)
+  MODICMST            String?   @db.Char(1)
+  MATERIA_PRIMA       String?   @db.Char(1)
+  GTIN                String?   @db.VarChar(14)
+  PRECO_ATACADO       Decimal?  @db.Decimal(15, 2)
+  ESTOQUE             String    @default("S") @db.Char(1)
+  PESO_LIQUIDO        Decimal?  @db.Decimal(15, 2)
+  PESO_BRUTO          Decimal?  @db.Decimal(15, 2)
+  VR_PACOTE           Decimal?  @db.Decimal(15, 2)
+  CSTPIS_ESPECIAL     String?   @db.VarChar(2)
+  CSTCOFINS_ESPECIAL  String?   @db.VarChar(2)
+  ANP                 String?   @db.VarChar(9)
+  ROMANEIO_GRANEL     Decimal?  @db.Decimal(15, 2)
+  OBSERVACOES         String?   @db.VarChar(500)
+  FG_ENCARGO          String?   @default("N") @db.Char(1)
+  TIPO_COMISSAO       String?   @default("%") @db.Char(1)
+  COMISSAO2           Decimal?  @db.Decimal(15, 2)
+  TIPO_COMISSAO2      String?   @default("%") @db.Char(1)
+  PRECO_MINIMO        Decimal?  @db.Decimal(15, 2)
+  FG_PESO_BALANCA     String?   @default("N") @db.Char(1)
+  IMAGEM              Bytes?
+  FG_LOTE             String?   @default("N") @db.Char(1)
+  VOLUME              Int?
+  COND_MAX            Int?
+  ID_APLICACAO        Int?
+  SIMILARIDADE        Int?
+  ID_FABRICANTE       Int       @default(1)
+  ID_MODELO           Int       @default(1)
+  ARM_PONTE           Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_H           Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_V           Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_D           Decimal?  @db.Decimal(15, 2)
+  ID_TRATAMENTO       Int?      @default(1)
+  FG_WEB              Int?
+  DT_WEB              DateTime? @db.DateTime(0)
+  FOTO1               String?   @db.VarChar(100)
+  FOTO2               String?   @db.VarChar(100)
+  FOTO3               String?   @db.VarChar(100)
+  FOTO4               String?   @db.VarChar(100)
+  ARM_LENTE           Int?
+  ARM_HASTE           Int?
+  LARGURA             Decimal?  @db.Decimal(15, 2)
+  ALTURA              Decimal?  @db.Decimal(15, 2)
+  COMPRIMENTO         Decimal?  @db.Decimal(15, 2)
+  ID_COR              Int       @default(1)
+  ID_ESTILO           Int       @default(1)
+  ID_MATERIAL         Int       @default(1)
+  ID_FX_ETARIA        Int       @default(1)
+  GENERO              String    @default("") @db.Char(1)
+  ID_WEBNOME          Int?
+  ID_WEBDESC          Int?
+  ID_COR_LENTE        Int       @default(1)
+  FG_WPUB             DateTime? @db.DateTime(0)
+  FG_WNS              String    @default("N") @db.Char(1)
+  PRECO_PROG          Decimal?  @db.Decimal(15, 2)
+  DT_PRECO_PROG       DateTime? @db.DateTime(0)
+  WEB_TITULO          String?   @db.VarChar(120)
+  WEB_METATAG         String?   @db.VarChar(150)
+  WEB_PALAVRAS        String?   @db.Text
+  DT_ULT_CMP          DateTime? @db.DateTime(0)
+  UID                 String?   @db.VarChar(50)
+  VL_ID               String?   @db.VarChar(50)
+  LID                 String?   @db.VarChar(50)
+  LID_FAB             Int?      @db.SmallInt
+  DT_LUPD             DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PRODUTO])
+}
+
+model es_produto_web {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_PRODUTO_WEB BigInt
+  ID_PRODUTO     Int
+  QUANTIDADE     Float
+  PR_UNIT        Float
+  DT_LANCAMENTO  DateTime  @db.Timestamp(0)
+  ID_EMPRESA     Int?
+  FG_ORIGEM      String?   @db.VarChar(3)
+  ID_ORIGEM      Int?
+  FG_TIPO        Int
+  FG_STATUS      Int
+  DT_STATUS      DateTime? @db.Timestamp(0)
+  TIPO_MOV       String    @db.Char(1)
+  ESTOQUE        Decimal?  @db.Decimal(15, 2)
+  USUARIO        String?   @db.VarChar(20)
+  FG_ERRO        Int?
+  DT_INI_PROMO   DateTime? @db.Timestamp(0)
+  DT_FIM_PROMO   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PRODUTO_WEB])
+}
+
+model es_profor {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_REG     BigInt
+  ID_EMPRESA Int
+  ID_PRODUTO Int
+  ID_FORNEC  Int
+  ULTATU     DateTime? @db.Timestamp(0)
+  CODFOR     String    @db.VarChar(60)
+  CODBAR     String?   @db.VarChar(20)
+  DESCRICAO  String?   @db.VarChar(120)
+  PRECOBASE  Decimal?  @db.Decimal(15, 2)
+  DESCONTO   Decimal?  @db.Decimal(15, 2)
+  ID_COMPRA  Int?
+  FG_INATIVO DateTime? @db.Timestamp(0)
+  USUARIO    String?   @db.VarChar(20)
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model es_propolp {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_REG      BigInt
+  ID_EMPRESA  Int?
+  ID_FORNEC   Int?
+  ID_GRUPO    Int?
+  ID_MARCA    Int?
+  FATOR       Decimal?  @db.Decimal(15, 2)
+  ULTATU      DateTime? @db.Timestamp(0)
+  FATORMINIMO Decimal?  @db.Decimal(15, 2)
+  FATOR_PRECO String    @default("F") @db.Char(1)
+  USUARIO     String?   @db.VarChar(15)
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model es_prosaldo {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_PRODUTO      Int
+  ID_TIPO_ESTOQUE Int
+  ID_EMPRESA      Int
+  QUANTIDADE      Float     @default(0)
+  CUSTOMEDIO      Float     @default(0)
+  VALOR           Float     @default(0)
+  DATA            DateTime  @db.Timestamp(0)
+  ETIQUETA        Int       @default(0)
+  ID_REG          BigInt
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model es_tabpreco {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_TABELA Int
+  DT_TABELA DateTime  @db.Timestamp(0)
+  FAIXA     Decimal?  @db.Decimal(15, 2)
+  DESCRICAO String?   @db.VarChar(30)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TABELA])
+}
+
+model es_tipo_estoque {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_TIPO_ESTOQUE Int
+  DESCRICAO       String    @db.VarChar(30)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TIPO_ESTOQUE])
+}
+
+model es_tipo_movimento {
+  ID_BASE                    Int
+  BASE                       String    @db.VarChar(30)
+  ID_TIPO_MOV                Int
+  DESCRICAO                  String    @db.VarChar(30)
+  TIPO                       String    @db.Char(1)
+  CFOP                       String?   @default("") @db.VarChar(20)
+  CLIFRN                     String?   @default("") @db.Char(1)
+  PESSOA                     String?   @default("") @db.Char(1)
+  FG_ESTOQUE                 String?   @default("SS") @db.VarChar(2)
+  FG_FINANCEIRO              String?   @default("SS") @db.VarChar(2)
+  FG_REMESSA                 String?   @default("NS") @db.VarChar(2)
+  FG_CONSUMO                 String?   @default("NS") @db.VarChar(2)
+  CSOSN                      String?   @default("") @db.VarChar(3)
+  FG_FINALIDADE              String?   @db.Char(1)
+  NATUREZA                   String?   @db.VarChar(60)
+  ID_OBSPAD                  Int?
+  ALIQST                     String?   @default("N") @db.Char(1)
+  ICMS                       String?   @default("N") @db.Char(1)
+  SUBSTRIB                   String?   @default("N") @db.Char(1)
+  IPI                        String?   @default("N") @db.Char(1)
+  PIS                        String?   @default("N") @db.Char(1)
+  COFINS                     String?   @default("N") @db.Char(1)
+  DESCONSIDERA_DESCONTO_ICMS String?   @default("N") @db.Char(1)
+  FG_BCICMS                  String?   @default("I") @db.Char(1)
+  SELPRODUTOS                String?   @default("") @db.Char(1)
+  CST                        String?   @db.VarChar(2)
+  CSTPIS                     String?   @db.VarChar(2)
+  CSTCOFINS                  String?   @db.VarChar(2)
+  CSTIPI                     String?   @db.VarChar(2)
+  CSTICM                     String?   @db.VarChar(1)
+  CSTICMST                   String?   @db.VarChar(1)
+  FG_FCP                     String    @default("N") @db.VarChar(1)
+  FN_ATIVO                   String?   @default("S") @db.Char(1)
+  FN_SINAL                   String?   @default("+") @db.Char(1)
+  DEC_QTD                    Int?      @db.SmallInt
+  DEC_PRU                    Int?      @db.SmallInt
+  FG_IBPT                    String?   @default("SS") @db.VarChar(2)
+  DT_LUPD                    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TIPO_MOV])
+}
+
+model es_transferencia {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_TRANSFERENCIA Int
+  FG_FECHADO       String    @default("N") @db.Char(1)
+  DT_FECHADO       DateTime? @db.Timestamp(0)
+  ID_EMPRESA       Int
+  DT_TRANSFERENCIA DateTime  @db.Timestamp(0)
+  USUARIO          String    @db.VarChar(20)
+  USUARIO_FCH      String?   @db.VarChar(20)
+  ID_ORIGEM        Int
+  ID_DESTINO       Int
+  ID_PEDIDO        Int?
+  ID_REQUISICAO    Int?
+  ID_EMPRESA_DEST  Int?
+  OBS              String?   @db.Text
+  ID_NOTA          Int?
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TRANSFERENCIA])
+}
+
+model es_transferencia_itens {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_ITEM          Int
+  ID_TRANSFERENCIA Int
+  ID_PRODUTO       Int
+  QUANTIDADE       Float
+  ID_ESTOQUE_ORG   BigInt?
+  ID_ESTOQUE_DES   BigInt?
+  QT_ENTRADA       Decimal?  @db.Decimal(15, 2)
+  ID_ESTOQUE_AJ    Int?
+  FG_STATUS        String?   @default("N") @db.Char(1)
+  USER_AJ          String?   @db.VarChar(20)
+  ID_AJUSTE        Int?
+  VR_UNITARIO      Decimal?  @db.Decimal(15, 2)
+  VR_CADASTRO      Decimal?  @db.Decimal(15, 2)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ITEM])
+}
+
+model es_tratamento {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_TRATAMENTO  Int
+  DESCRICAO      String    @db.VarChar(40)
+  ID_FABRICANTE  Int       @default(1)
+  PR_COMPRA      Decimal?  @db.Decimal(15, 2)
+  PR_VENDA       Decimal?  @db.Decimal(15, 2)
+  LID_FAB        Int?      @db.SmallInt
+  LID_TRA        Int?      @db.SmallInt
+  ID_PRODUTO     Int?
+  ID_PROSRV      Int?
+  FG_OBRIGATORIO Int       @default(0) @db.SmallInt
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TRATAMENTO])
+}
+
+model es_unidade {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  DESCRICAO  String    @db.VarChar(30)
+  ID_UNIDADE String    @default("UN") @db.VarChar(6)
+  ID_UND     Int
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_UND])
+}
+
+model f_cbenef {
+  CBENEF     String    @db.VarChar(8)
+  CST00      Int       @default(0) @db.SmallInt
+  CST10      Int       @default(0) @db.SmallInt
+  CST20      Int       @default(0) @db.SmallInt
+  CST30      Int       @default(0) @db.SmallInt
+  CST40      Int       @default(0) @db.SmallInt
+  CST41      Int       @default(0) @db.SmallInt
+  CST50      Int       @default(0) @db.SmallInt
+  CST51      Int       @default(0) @db.SmallInt
+  CST60      Int       @default(0) @db.SmallInt
+  CST70      Int       @default(0) @db.SmallInt
+  CST90      Int       @default(0) @db.SmallInt
+  DT_VIG_INI DateTime? @db.Timestamp(0)
+  DT_VIG_FIM DateTime? @db.Timestamp(0)
+  DESCRICAO  String?   @db.VarChar(130)
+  OBS        String?   @db.Text
+  ID_REG     Int       @id
+}
+
+model f_cft {
+  ID        String  @db.VarChar(2)
+  DESCRICAO String? @db.VarChar(60)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_chq_motivo {
+  ID        Int
+  DESCRICAO String? @db.VarChar(160)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_csosn {
+  ID        String  @db.VarChar(3)
+  DESCRICAO String? @db.VarChar(80)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_cstcofins {
+  ID        String  @db.VarChar(2)
+  DESCRICAO String? @db.VarChar(150)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_cstipi {
+  ID        String  @db.VarChar(2)
+  DESCRICAO String? @db.VarChar(50)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_cstpis {
+  ID        String  @db.VarChar(2)
+  DESCRICAO String? @db.VarChar(150)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_finalidade {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(30)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_icms {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(30)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_icmsst {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(50)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_idoc_tp {
+  ID_IDOC_TP Int    @id @db.SmallInt
+  DESCRICAO  String @db.VarChar(50)
+  FG_ORIGEM  String @db.VarChar(3)
+}
+
+model f_itask {
+  ID_TP_ITASK Int     @id @db.SmallInt
+  DESCRICAO   String? @db.VarChar(150)
+}
+
+model f_neg {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(30)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_origem {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(130)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_tabelas {
+  NM_TABELA String @id @db.VarChar(40)
+  PRIK      String @db.VarChar(40)
+}
+
+model f_tpag {
+  ID_TPAG   Int     @id @db.SmallInt
+  DESCRICAO String? @db.VarChar(50)
+}
+
+model f_tpintermedio {
+  ID        String  @db.VarChar(1)
+  DESCRICAO String? @db.VarChar(130)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model f_viatransp {
+  ID        String  @db.VarChar(2)
+  DESCRICAO String? @db.VarChar(130)
+  ID_REG    Int     @id @db.SmallInt
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model fn_agencia {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_AGENCIA Int
+  NOME       String    @db.VarChar(50)
+  ID_BANCO   String    @db.VarChar(3)
+  ID_CIDADE  Int?
+  ENDERECO   String?   @db.VarChar(40)
+  CONTATO    String?   @db.VarChar(30)
+  GERENTE    String?   @db.VarChar(30)
+  NUMERO     String    @db.VarChar(7)
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_AGENCIA])
+}
+
+model fn_bancos {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_BANCO         String    @db.VarChar(3)
+  NOME             String    @db.VarChar(30)
+  ABREVIADO        String    @db.VarChar(10)
+  ID_SCRIPT_BOLETO Int?
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_BANCO])
+}
+
+model fn_boleto_receber {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_BOLETO  Int
+  ID_RECEBER Int
+  ID_REG     Int
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model fn_boletos {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_BOLETO       Int
+  DT_EMISSAO      DateTime? @db.Timestamp(0)
+  ID_PESSOA       Int
+  ID_ENDERECO     Int?
+  ID_CONTA        Int
+  DT_VENCTO       DateTime  @db.Timestamp(0)
+  DT_PAGTO        DateTime? @db.Timestamp(0)
+  VALOR           Float
+  VRPAGO          Decimal?  @db.Decimal(15, 2)
+  VRTARIFA        Decimal?  @db.Decimal(15, 2)
+  DOCUMENTO       String?   @db.VarChar(25)
+  OBS             String?   @db.Text
+  FG_ORIGEM       String?   @db.VarChar(3)
+  NRBANCO         String?   @db.VarChar(20)
+  ID_REMESSA      Int?
+  ACEITE          String    @default("N") @db.Char(1)
+  EMAIL           String?   @db.VarChar(40)
+  BOLBARRAS       String?   @db.VarChar(50)
+  ESPECIE         String?   @default("DM") @db.VarChar(2)
+  LINHADIGI       String?   @db.VarChar(60)
+  DT_AVISO        DateTime? @db.Timestamp(0)
+  ID_PIX          Int?
+  UID_INSTALLMENT String?   @db.VarChar(100)
+  UID_PAY         String?   @db.VarChar(100)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_BOLETO])
+}
+
+model fn_cartao {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_CARTAO      Int
+  DESCRICAO      String    @db.VarChar(20)
+  ID_CONTA       Int?
+  ID_ARQ         Int?
+  BX_AUTO        String    @default("N") @db.Char(1)
+  FG_ATIVO       String    @default("S") @db.Char(1)
+  ID_IMG         Int?
+  ID_ORD         Int?
+  FG_ANTECIPACAO String    @default("N") @db.Char(1)
+  IDC_ADQ        Int?      @db.SmallInt
+  DT_LUPD        DateTime? @db.Timestamp(0)
+  CNPJ           String?   @db.VarChar(14)
+  TEF_DESC       String?   @db.VarChar(40)
+
+  @@id([ID_BASE, ID_CARTAO])
+}
+
+model fn_cartao_itens {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_CARTAO_ITENS Int
+  ID_EMPRESA      Int?
+  FG_ATIVO        String    @default("S") @db.Char(1)
+  PARCELA         Int?
+  PARCELAS        Int?
+  ID_PESSOA       Int
+  FG_ORIGEM       String?   @db.VarChar(3)
+  ID_ORIGEM       BigInt?
+  DOC_ORIG        String?   @db.VarChar(25)
+  ID_CARTAO_OP    Int
+  DT_EMISSAO      DateTime? @db.DateTime(0)
+  DT_VENCTO       DateTime  @db.DateTime(0)
+  VR_CARTAO       Float
+  DT_PAGTO        DateTime? @db.DateTime(0)
+  DT_VENCTOR      DateTime? @db.DateTime(0)
+  VR_CARTAOR      Decimal?  @db.Decimal(15, 2)
+  NR_CARTAO       String?   @db.VarChar(16)
+  TITULAR         String?   @db.VarChar(30)
+  ID_CONTA        Int?
+  FG_CONFIRMADO   DateTime? @db.DateTime(0)
+  TAXA            Decimal?  @db.Decimal(15, 2)
+  ID_CONCIL       Int?
+  ID_TRACK        String?   @db.VarChar(20)
+  OBS_CONCIL      String?   @db.VarChar(300)
+  ID_CONCILPG     Int?
+  ID_PIX          Int?
+  AUTORIZACAO     String?   @db.VarChar(20)
+  UNIQUECID       String?   @db.VarChar(50)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CARTAO_ITENS])
+}
+
+model fn_cartao_op {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_CARTAO_OP Int
+  DESCRICAO    String    @db.VarChar(30)
+  PRAZO        Int?
+  ID_CARTAO    Int?
+  TP_CARTAO    String?   @default("C") @db.Char(1)
+  EMPRESAS     String?   @db.VarChar(50)
+  FG_ATIVO     String    @default("S") @db.Char(1)
+  ID_IMG       Int?
+  IDC_BRAND    Int?      @db.SmallInt
+  DT_LUPD      DateTime? @db.Timestamp(0)
+  ID_NFC       Int?      @db.SmallInt
+  TEF_DESC     String?   @db.VarChar(40)
+  PARCELADOPOR Int?      @db.SmallInt
+
+  @@id([ID_BASE, ID_CARTAO_OP])
+}
+
+model fn_cartao_opp {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_CARTAO_OP Int
+  INI          Int
+  FIM          Int
+  TAXA         Decimal?  @db.Decimal(15, 2)
+  ID_REG       Int
+  TAXA_CON     Decimal?  @db.Decimal(15, 2)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model fn_ccusto {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_CC      Int
+  ID_EMPRESA Int
+  ID_CLASSE  Int?
+  CODCUSTO   String    @db.VarChar(20)
+  NIVEL      Int
+  DT_LANCTO  DateTime  @db.Timestamp(0)
+  ID_USUARIO Int
+  FG_TIPO    String    @db.Char(1)
+  TIPO       String?   @db.Char(1)
+  CODCORIGEM String?   @db.VarChar(20)
+  DESCRICAO  String    @db.VarChar(25)
+  ID_ORIGEM  Int?
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CC])
+}
+
+model fn_cheque {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_CHEQUE       Int
+  ID_EMPRESA      Int?
+  ID_PESSOA       Int
+  FG_ORIGEM       String?   @db.VarChar(3)
+  ID_ORIGEM       BigInt?
+  ID_CONTA        Int?
+  ID_COMPENSACAO  Int?
+  FG_ATIVO        String    @default("S") @db.Char(1)
+  NR_CHEQUE       String    @db.VarChar(40)
+  ID_BANCO        String    @db.VarChar(3)
+  NR_AGENCIA      String    @db.VarChar(30)
+  NR_CONTA        String    @db.VarChar(30)
+  DT_EMISSAO      DateTime  @db.DateTime(0)
+  VENCIMENTO      DateTime? @db.DateTime(0)
+  DT_PGTO         DateTime? @db.DateTime(0)
+  VALOR           Float
+  PROPRIO         String    @default("N") @db.Char(1)
+  DOC_ORIG        String?   @db.VarChar(25)
+  CPF_CNPJ        String?   @db.VarChar(18)
+  TITULAR         String    @db.VarChar(30)
+  DT_ENTRADA      DateTime? @db.DateTime(0)
+  DT_DEV1         DateTime? @db.DateTime(0)
+  DT_DEV2         DateTime? @db.DateTime(0)
+  MOTIVO1         Int?
+  MOTIVO2         Int?
+  ID_REPASSE      Int?
+  DT_REPASSE      DateTime? @db.DateTime(0)
+  MOTIVO_REPASSE  String?   @db.VarChar(130)
+  OBSERVACOES     String?   @db.VarChar(100)
+  OBS_COMPENSACAO String?   @db.VarChar(100)
+  ID_PAGAMENTO    Int?
+  SERASA          String?   @db.VarChar(20)
+  PARCELA         Int?
+  PARCELAS        Int?
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CHEQUE])
+}
+
+model fn_classe {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_CLASSE    Int
+  TIPO         String    @db.Char(1)
+  DESCRICAO    String    @db.VarChar(35)
+  ID_GRUPO     Int
+  BANCARIO     String?   @default("N") @db.Char(1)
+  CTRFUNC      String?   @default("N") @db.Char(1)
+  FG_CAIXINHA  String?   @default("S") @db.Char(1)
+  OBS          String?   @db.Text
+  COD_CONTABIL String?   @db.VarChar(30)
+  COD_CRD      String?   @db.VarChar(30)
+  COD_DEB      String?   @db.VarChar(30)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CLASSE])
+}
+
+model fn_conta {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_CONTA        Int
+  ID_MOEDA        Int?
+  ID_EMPRESA      Int?
+  DESCRICAO       String    @db.VarChar(30)
+  FG_CAIXINHA     String    @default("N") @db.Char(1)
+  ID_AGENCIA      Int?
+  NUMERO          String?   @db.VarChar(36)
+  VR_SALDO        Decimal?  @db.Decimal(15, 2)
+  DT_RECONCILIA   DateTime? @db.Timestamp(0)
+  NR_PROXBOL      Decimal?  @db.Decimal(15, 2)
+  FG_CX           String    @default("N") @db.Char(1)
+  BOL_INSTRUCAO   String?   @db.Text
+  CARTEIRA        String?   @db.VarChar(7)
+  CONVENIO        String?   @db.VarChar(12)
+  TX_MORA         Decimal?  @db.Decimal(15, 2)
+  TX_MULTA        Decimal?  @db.Decimal(15, 2)
+  FG_CNAB         String?   @default("1") @db.Char(1)
+  LOCAL_PAGAMENTO String?   @db.VarChar(60)
+  DIR_REMESSA     String?   @db.VarChar(100)
+  DIR_RETORNO     String?   @db.VarChar(100)
+  NR_REMESSA      Int?
+  CEDENTE         String?   @db.VarChar(12)
+  DIAS_PROTESTO   Int?
+  ID_SCRIPT_HTML  Int?
+  FG_API          String    @default("N") @db.Char(1)
+  APIK            String?   @db.VarChar(400)
+  PIXKEY          String?   @db.VarChar(100)
+  PIXID           String?   @db.VarChar(100)
+  DIAS_ACEITE     Int?      @default(0) @db.SmallInt
+  TX_BOLETO       Float     @default(0)
+  FG_APIIMP       String    @default("N") @db.Char(1)
+  PIX_TPCHAVE     Int       @default(0) @db.SmallInt
+  PIXCHAVE        String?   @db.VarChar(77)
+  CERT_PFXKEY     String?   @db.VarChar(150)
+  CERT_PEM        String?   @db.VarChar(150)
+  CERT_ROOT       String?   @db.VarChar(150)
+  SCOPE           String?   @db.VarChar(400)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CONTA])
+}
+
+model fn_grupo {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_GRUPO  Int
+  DESCRICAO String    @db.VarChar(35)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_GRUPO])
+}
+
+model fn_meios_pagto {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_MEIOS_PAGTO   Int
+  FG_ORIGEM        String    @db.VarChar(3)
+  ID_ORIGEM        BigInt
+  DINHEIRO         Float     @default(0)
+  CHEQUE           Float     @default(0)
+  CARTAO_CREDITO   Float     @default(0)
+  CARTAO_DEBITO    Float     @default(0)
+  CREDITO_LOJA     Float     @default(0)
+  VALE_ALIMENTACAO Float     @default(0)
+  VALE_REFEICAO    Float     @default(0)
+  VALE_PRESENTE    Float     @default(0)
+  VALE_COMBUSTIVEL Float     @default(0)
+  OUTROS           Float     @default(0)
+  DEP_BANCARIO     Float     @default(0)
+  BOL_BANCARIO     Float     @default(0)
+  PIX              Float     @default(0)
+  TED              Float     @default(0)
+  CASHBACK         Float     @default(0)
+  DET_PAG          String?   @db.VarChar(100)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MEIOS_PAGTO])
+}
+
+model fn_moeda {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_MOEDA  Int
+  DESCRICAO String    @db.VarChar(30)
+  SIMBOLO   String    @db.VarChar(3)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MOEDA])
+}
+
+model fn_movimento {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_MOVIMENTO  BigInt
+  ID_EMPRESA    Int?
+  ID_PESSOA     Int?
+  ID_CONTA      Int
+  ID_CLASSE     Int
+  ID_TIPO_MOV   Int
+  FG_ATIVO      String    @default("S") @db.Char(1)
+  DATA          DateTime  @db.Timestamp(0)
+  DATA_LCTO     DateTime? @db.Timestamp(0)
+  VALOR         Float
+  FG_STATUS     String?   @db.Char(1)
+  FG_ESTORNO    String    @default("N") @db.Char(1)
+  FG_ORIGEM     String?   @db.VarChar(3)
+  ID_ORIGEM     BigInt?
+  ID_TIPO_DOC   Int?
+  ID_CONTA_DEST Int?
+  DOCUMENTO     String?   @db.VarChar(25)
+  USUARIO       String?   @db.VarChar(15)
+  HISTORICO     String?   @db.VarChar(200)
+  SALDO         Decimal?  @db.Decimal(15, 2)
+  OFX_DT        DateTime? @db.Timestamp(0)
+  OFX_ID        BigInt?
+  ID_PIX        Int?
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MOVIMENTO])
+}
+
+model fn_pagar {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_PAGAR      Int
+  ID_EMPRESA    Int       @default(1)
+  ID_PESSOA     Int
+  ID_MOEDA      Int?
+  ID_CLASSE     Int
+  ID_TIPO_DOC   Int
+  FG_ATIVO      String    @default("S") @db.Char(1)
+  DT_NOTA       DateTime? @db.DateTime(0)
+  DT_LANCAMENTO DateTime  @db.Timestamp(0)
+  DT_VENCTO     DateTime  @db.DateTime(0)
+  FG_ORIGEM     String    @default("DIG") @db.VarChar(3)
+  ID_ORIGEM     BigInt?
+  VR_PARCELA    Float
+  NR_NOTA       String?   @default("") @db.VarChar(15)
+  VR_NOTA       Float?    @default(0)
+  DOCUMENTO     String    @db.VarChar(25)
+  ID_BANCO_DOC  String?   @db.VarChar(3)
+  HISTORICO     String?   @db.VarChar(200)
+  ID_CONTA      Int?
+  ID_MOVIMENTO  BigInt?
+  DT_PAGTO      DateTime? @db.DateTime(0)
+  VR_JUROS      Decimal?  @db.Decimal(15, 2)
+  VR_DESCONTO   Decimal?  @db.Decimal(15, 2)
+  VR_PAGO       Decimal?  @db.Decimal(15, 2)
+  NUMCHEQUE     String?   @db.VarChar(10)
+  ID_PAGBAIXA   Int?
+  ID_PAGARGER   Int?
+  ID_PAGAMENTO  Int?
+  DT_LUPD       DateTime? @db.Timestamp(0)
+  USUARIO       String?   @db.VarChar(15)
+
+  @@id([ID_BASE, ID_PAGAR])
+}
+
+model fn_pix {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_PIX      Int
+  ID_EMPRESA  Int
+  DT_EMISSAO  DateTime  @db.Timestamp(0)
+  DT_VENCTO   DateTime? @db.Timestamp(0)
+  VALOR       Float
+  DT_PAGTO    DateTime? @db.Timestamp(0)
+  PID         String?   @db.VarChar(150)
+  PDATA       DateTime? @db.Timestamp(0)
+  VR_PAGO     Decimal?  @db.Decimal(15, 2)
+  VR_JUROS    Float     @default(0)
+  VR_DESCONTO Float     @default(0)
+  TX_CARTAO   Float     @default(0)
+  TX_PIX      Float     @default(0)
+  TX_IPIX     Float     @default(0)
+  DT_AVISO    DateTime? @db.Timestamp(0)
+  USUARIO     String    @db.VarChar(15)
+  DT_UPD      DateTime? @db.Timestamp(0)
+  ID_CONTA    Int
+  HISTORICO   String?   @db.VarChar(200)
+  FG_ORIGEM   String    @db.VarChar(4)
+  ID_ORIGEM   BigInt?
+  EMV         String?   @db.VarChar(300)
+  PSTATUS     Int?      @default(0) @db.SmallInt
+  URL         String?   @db.VarChar(300)
+  DT_EXP      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PIX])
+}
+
+model fn_receber {
+  ID_BASE            Int
+  BASE               String    @db.VarChar(30)
+  ID_RECEBER         Int
+  ID_EMPRESA         Int
+  ID_PESSOA          Int
+  ID_MOEDA           Int
+  ID_TIPO_DOC        Int?
+  ID_CLASSE          Int
+  ID_SITUACAO        Int?      @default(1)
+  FG_ATIVO           String    @default("S") @db.Char(1)
+  DT_LANCAMENTO      DateTime  @db.DateTime(0)
+  DT_NOTA            DateTime? @db.DateTime(0)
+  DT_VENCTO          DateTime  @db.DateTime(0)
+  DT_VENCTO_ORIGINAL DateTime? @db.DateTime(0)
+  VR_NOTA            Float?    @default(0)
+  VR_PARCELA         Float
+  DOCUMENTO          String    @db.VarChar(25)
+  DT_PAGTO           DateTime? @db.DateTime(0)
+  ID_CTA_COBRANCA    Int
+  FG_ORIGEM          String    @default("DIG") @db.VarChar(3)
+  ID_ORIGEM          BigInt?
+  NR_BANCO           String?   @db.VarChar(15)
+  NR_NOTA            String?   @db.VarChar(15)
+  DT_EMISSAO_DOC     DateTime? @db.DateTime(0)
+  VR_PAGO            Decimal?  @db.Decimal(15, 2)
+  ID_RECEBTO         Int?
+  VR_JURO            Decimal?  @db.Decimal(15, 2)
+  VR_DESC            Decimal?  @db.Decimal(15, 2)
+  ID_RECEBGER        Int?
+  IDLANCTOMOV        Int?
+  ID_VENDEDOR        Int?
+  BASE_COMISSAO      Float?    @default(0)
+  TAXA_COMISSAO      Float?    @default(0)
+  HISTORICO          String?   @db.VarChar(200)
+  ID_COMPRADOR       Int?
+  ID_PIX             Int?
+  DT_LUPD            DateTime? @db.Timestamp(0)
+  USUARIO            String?   @db.VarChar(15)
+
+  @@id([ID_BASE, ID_RECEBER])
+}
+
+model fn_recebeto {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_RECEBTO      Int
+  TIPOPAG         String?   @db.Char(1)
+  DATA            DateTime  @db.Timestamp(0)
+  ID_EMPRESA      Int
+  ID_CLIENTE      Int
+  ID_CONTA        Int
+  ID_CLASSE       Int
+  ID_MOV_FINA     BigInt?
+  PAGO            Float
+  JUROS           Decimal?  @db.Decimal(15, 2)
+  DESCONTO        Decimal?  @db.Decimal(15, 2)
+  VR_DINHEIRO     Decimal?  @db.Decimal(15, 2)
+  VR_CHEQUE       Decimal?  @db.Decimal(15, 2)
+  VR_CARTAO       Decimal?  @db.Decimal(15, 2)
+  VR_CONVENIO     Decimal?  @db.Decimal(15, 2)
+  VR_TROCO        Decimal?  @db.Decimal(15, 2)
+  VR_CREDITO      Decimal?  @db.Decimal(15, 2)
+  VR_ADIANTAMENTO Float?    @default(0)
+  VR_CREDIARIO    Float?    @default(0)
+  OBSERVACAO      String?   @db.VarChar(200)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+  USUARIO         String?   @db.VarChar(15)
+
+  @@id([ID_BASE, ID_RECEBTO])
+}
+
+model fn_recebeto_titulos {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_RECEBTO Int
+  ID_RECEBER Int
+  ID_MULTI   Int?
+  TITULO     String    @db.VarChar(25)
+  VALOR      Float
+  VENCIMENTO DateTime  @db.Timestamp(0)
+  PAGAMENTO  DateTime  @db.Timestamp(0)
+  JURO       Float
+  ID_REG     Int
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model fn_reparc {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_REPARC    Int
+  TIPO         String    @default("R") @db.Char(1)
+  FG_DIRETO    String    @default("N") @db.Char(1)
+  DT_REPARC    DateTime  @db.Timestamp(0)
+  ID_EMPRESA   Int
+  ID_PESSOA    Int
+  ID_CONTA     Int
+  ID_CONDICAO  Int?
+  ID_CLASSE    Int
+  ID_TIPO_DOC  Int
+  VR_PARCELAS  Float     @default(0)
+  VR_JUROS     Float     @default(0)
+  VR_BRUTO     Float     @default(0)
+  VR_DESCONTO  Float     @default(0)
+  VR_LIQUIDO   Float     @default(0)
+  VR_PARCELADO Float     @default(0)
+  VR_CRED      Float     @default(0)
+  VR_DEB       Float     @default(0)
+  TX_CONDICAO  Float     @default(0)
+  OBS          String?   @db.Text
+  FG_MOV       String    @default("N") @db.Char(1)
+  FG_JUROS     String    @default("N") @db.Char(1)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REPARC])
+}
+
+model fn_reparc_destino {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_REPARC_DESTINO Int
+  ID_REPARC         Int
+  DOCUMENTO         String    @db.VarChar(25)
+  VR_PARCELA        Float     @default(0)
+  ID_RECEBER        Int?
+  ID_PAGAR          Int?
+  ID_MOVIMENTO      BigInt?
+  VR_JUROS          Float     @default(0)
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REPARC_DESTINO])
+}
+
+model fn_reparc_origem {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_REPARC_ORIGEM Int
+  ID_REPARC        Int
+  DOCUMENTO        String    @db.VarChar(25)
+  VR_PARCELA       Float     @default(0)
+  ID_RECEBER       Int?
+  ID_PAGAR         Int?
+  ID_CHEQUE        Int?
+  ID_CARTAO_ITENS  Int?
+  ID_MOVIMENTO     BigInt?
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REPARC_ORIGEM])
+}
+
+model fn_situacao {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_SITUACAO Int
+  DESCRICAO   String    @db.VarChar(40)
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_SITUACAO])
+}
+
+model fn_tef {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_TEF        Int
+  ID_EMPRESA    Int
+  ID_ORIGEM     BigInt?
+  DOCUMENTO     String    @db.VarChar(15)
+  FG_ORIGEM     String?   @db.VarChar(3)
+  PARCELAS      Int?
+  VR_CARTAO     Float     @default(0)
+  VR_ACRESCIMO  Float     @default(0)
+  VR_DESCONTO   Float     @default(0)
+  DT_TRANSACAO  DateTime? @db.Timestamp(0)
+  NSU           String?   @db.VarChar(16)
+  NSU_TEF       String?   @db.Char(30)
+  NSU_CNC       String?   @db.Char(30)
+  AUTORIZACAO   String?   @db.VarChar(20)
+  REDE          String?   @db.VarChar(30)
+  BANDEIRA      String?   @db.VarChar(30)
+  ID_BANDNF     Int       @db.SmallInt
+  ID            Int?
+  FG_DEBITO     Int       @db.SmallInt
+  FG_CREDITO    Int       @db.SmallInt
+  FG_CONFIRMADO Int       @db.SmallInt
+  FG_CANCELADO  Int       @db.SmallInt
+  ID_MPGDIGITAL String?   @db.VarChar(50)
+  PARCELADOPOR  Int       @db.SmallInt
+  TIPO          String?   @db.VarChar(50)
+  FINALIZACAO   String?   @db.VarChar(50)
+  ID_NOTA       Int?
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TEF])
+}
+
+model fn_tipo_doc {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_TIPO_DOC Int
+  DESCRICAO   String    @db.VarChar(40)
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TIPO_DOC])
+}
+
+model fn_tipo_mov {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_TIPO_MOV    Int
+  TIPO_MOVIMENTO String    @db.Char(1)
+  DESCRICAO      String    @db.VarChar(30)
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TIPO_MOV])
+}
+
+model ge_bairro {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_BAIRRO Int
+  NOME      String    @db.VarChar(40)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_BAIRRO])
+}
+
+model ge_cidade {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_CIDADE Int
+  NOME      String    @db.VarChar(40)
+  ID_ESTADO String    @db.VarChar(2)
+  CEP       String?   @db.VarChar(9)
+  IBGE      String?   @db.VarChar(7)
+  FONEDDD   String?   @default("") @db.VarChar(4)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CIDADE])
+}
+
+model ge_empresa {
+  ID_BASE              Int
+  BASE                 String    @db.VarChar(30)
+  ID_EMPRESA           Int
+  ID_PESSOA            Int
+  NOME_REDUZIDO        String?   @db.VarChar(30)
+  ATIVIDADE            String?   @default("2") @db.Char(1)
+  ID_EMAIL             Int?
+  BLOBIMG              Bytes?    @db.Blob
+  ALIQPIS              Decimal?  @db.Decimal(15, 2)
+  ALIQCOFINS           Decimal?  @db.Decimal(15, 2)
+  ALIQISS              Decimal?  @db.Decimal(15, 2)
+  TIPOREGIME           String?   @db.Char(1)
+  ID_ESCRITORIO        Int?
+  ID_CONTADOR          Int?
+  CTD_EMAIL            String?   @db.VarChar(50)
+  VALIDADE_CERTIFICADO DateTime? @db.Timestamp(0)
+  COR_FUNDO            Int?
+  COD_LUXOTTICA        String?   @db.VarChar(10)
+  ABREV                String?   @db.VarChar(5)
+  CD_LOJA              Int?
+  ORD_WEB              Int?
+  JDA                  Int?
+  JDA_SAP              Int?
+  DT_LUPD              DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_EMPRESA])
+}
+
+model ge_empresa_usuario {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_EMPRESA Int
+  ID_USUARIO Int
+  ID_REG     Int
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model ge_empresa_visao {
+  ID_BASE    Int
+  BASE       String @db.VarChar(30)
+  ID_EMPRESA Int
+  ID_VISAO   Int
+  ID_REG     Int
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model ge_estado {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_ESTADO String    @db.VarChar(2)
+  NOME      String    @db.VarChar(30)
+  CODIBGE   String?   @db.VarChar(2)
+  ID_UF     Int       @db.SmallInt
+  ID_PAIS   Int       @default(1)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ESTADO])
+}
+
+model ge_feriado {
+  ID_BASE    Int
+  BASE       String   @db.VarChar(30)
+  DT_FERIADO DateTime @db.Date
+  DESCRICAO  String?  @db.VarChar(40)
+
+  @@id([ID_BASE, DT_FERIADO])
+}
+
+model ge_generic {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_GENERIC Int
+  COD        String    @db.VarChar(3)
+  DESCRICAO  String    @db.VarChar(80)
+  BLOQUEADO  String    @default("N") @db.Char(1)
+  OBS        Bytes?    @db.Blob
+  URL_THUMB  String?   @db.VarChar(250)
+  URL        String?   @db.VarChar(250)
+  THUMB      Bytes?    @db.MediumBlob
+  ID_BTN     String?   @db.Char(1)
+  TP_NOTA    String?   @db.VarChar(10)
+  ID_ANTIBAN Int?
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_GENERIC])
+}
+
+model ge_grupo_endereco {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_GRUPO_ENDERECO Int
+  DESCRICAO         String    @db.VarChar(30)
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_GRUPO_ENDERECO])
+}
+
+model ge_medico {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_MEDICO        Int
+  ID_PESSOA        Int
+  CRM              String    @db.VarChar(15)
+  TAXA             Decimal?  @db.Decimal(15, 2)
+  BLOQUEADO        String    @default("N") @db.Char(1)
+  ID_REPRESENTANTE Int?
+  TX_VL            String    @default("T") @db.Char(1)
+  DT_LANCAMENTO    DateTime? @db.Timestamp(0)
+  USUARIO          String?   @db.VarChar(15)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+  FG_TIPO          String?   @db.Char(1)
+
+  @@id([ID_BASE, ID_MEDICO])
+}
+
+model ge_pais {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_PAIS       Int
+  NOME          String    @db.VarChar(30)
+  ABREVIADO     String    @db.VarChar(4)
+  NACIONALIDADE String    @db.VarChar(30)
+  CODPAIS       String?   @db.VarChar(5)
+  DDI           String?   @db.VarChar(5)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PAIS])
+}
+
+model ge_pessoa {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_PESSOA        Int
+  ID_PESSOA_UNI    Int?
+  DATA_CADASTRO    DateTime? @db.DateTime(0)
+  TIPO_PESSOA      String    @db.Char(1)
+  RAZAO            String    @db.VarChar(50)
+  FANTASIA         String?   @db.VarChar(50)
+  PRODUTOR         String?   @default("N") @db.Char(1)
+  FG_CONSENTIMENTO String    @default("S") @db.Char(1)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model ge_pessoa_empresa {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_PESSOA  Int
+  ID_EMPRESA Int
+  USUARIO    String?   @db.VarChar(15)
+  DT_INC     DateTime? @db.Timestamp(0)
+  ID_REG     Int
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model ge_pessoa_endereco {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_ENDERECO       Int
+  ID_PESSOA         Int?
+  ID_GRUPO_ENDERECO Int
+  ENDERECO          String    @db.VarChar(100)
+  BAIRRO            String?   @default("1") @db.VarChar(40)
+  CEP               String?   @db.VarChar(10)
+  ID_CIDADE         Int
+  TELEFONE          String?   @default("") @db.VarChar(20)
+  FAX               String?   @default("") @db.VarChar(20)
+  EMAIL             String?   @db.VarChar(100)
+  CXPOSTAL          String?   @db.VarChar(6)
+  SITE              String?   @db.VarChar(40)
+  CNPJ              String?   @db.VarChar(14)
+  INSC_ESTADUAL     String?   @db.VarChar(20)
+  INSC_PRODUTOR     String?   @db.VarChar(20)
+  COMPLEMENTO       String?   @db.VarChar(500)
+  E_LAT             Decimal?  @db.Decimal(15, 2)
+  E_LNG             Decimal?  @db.Decimal(15, 2)
+  ID_BAIRRO         Int?
+  CELULAR           String?   @default("") @db.VarChar(20)
+  FG_ATIVO          String    @default("S") @db.Char(1)
+  FG_MAIL           String    @default("S") @db.Char(1)
+  ID_PAIS           Int?      @default(1)
+  FG_WA             Int       @default(0) @db.TinyInt
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ENDERECO])
+}
+
+model ge_pessoa_fisica {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_PESSOA       Int
+  CPF             String    @db.VarChar(11)
+  RG              String?   @db.VarChar(20)
+  INSC_PRODUTOR   String?   @db.VarChar(20)
+  DT_NASCIMENTO   DateTime? @db.Date
+  SEXO            String?   @db.Char(1)
+  ID_PAIS         Int?
+  ID_NATURALIDADE Int?
+  NOME_PAI        String?   @db.VarChar(40)
+  NOME_MAE        String?   @db.VarChar(40)
+  ESTADO_CIVIL    String?   @db.VarChar(10)
+  REG_CASAMENTO   String?   @db.Char(1)
+  ID_CONJUGE      Int?
+  NOME_CONJUGE    String?   @db.VarChar(40)
+  ID_PROFISSAO    Int?
+  RENDA_MENSAL    Decimal?  @db.Decimal(15, 2)
+  LOCAL_TRAB      String?   @db.VarChar(30)
+  FONE_TRAB       String?   @db.VarChar(20)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model ge_pessoa_juridica {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_PESSOA       Int
+  CNPJ            String    @db.VarChar(14)
+  INSC_ESTADUAL   String?   @db.VarChar(20)
+  INSC_MUNICIPAL  String?   @db.VarChar(20)
+  DATA_REGISTRO   DateTime? @db.Date
+  NUMERO_REGISTRO String?   @db.VarChar(15)
+  CNAE            String?   @db.VarChar(7)
+  CNAES           String?   @db.VarChar(7)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model ge_profissao {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_PROFISSAO Int
+  DESCRICAO    String    @db.VarChar(30)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PROFISSAO])
+}
+
+model ge_ramo_atividade {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_RAMO   Int
+  DESCRICAO String    @db.VarChar(40)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_RAMO])
+}
+
+model ge_telefones {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_TELEFONES Int
+  NOME         String    @db.VarChar(50)
+  TELEFONE_1   String?   @db.VarChar(15)
+  TELEFONE_2   String?   @db.VarChar(15)
+  CELULAR_1    String?   @db.VarChar(15)
+  CELULAR_2    String?   @db.VarChar(15)
+  GRUPO        String    @default("TRABALHO") @db.VarChar(30)
+  ID_PAIS      Int       @default(1)
+  EMAIL        String?   @db.VarChar(300)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TELEFONES])
+}
+
+model ge_visao {
+  ID_BASE       Int
+  BASE          String  @db.VarChar(30)
+  ID_VISAO      Int
+  ID_PESSOA     Int
+  NOME_REDUZIDO String? @db.VarChar(30)
+  ABREV         String? @db.VarChar(5)
+
+  @@id([ID_BASE, ID_VISAO])
+}
+
+model ge_visao_usuario {
+  ID_BASE  Int
+  BASE     String @db.VarChar(30)
+  ID_USER  Int
+  ID_VISAO Int
+  ID_REG   Int
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model pedidos_dupli {
+  ID_BASE            Int
+  BASE               String    @db.VarChar(30)
+  ID_PEDIDO          Int
+  DOCUMENTO          String    @db.VarChar(25)
+  DT_LANCAMENTO      DateTime  @db.Timestamp(0)
+  DT_VENCTO          DateTime  @db.Timestamp(0)
+  DT_VENCTO_ORIGINAL DateTime? @db.Timestamp(0)
+  VR_PARCELA         Float
+  ID_CLASSE          Int
+  DT_PAGTO           DateTime? @db.Timestamp(0)
+  VR_PAGO            Decimal?  @db.Decimal(15, 2)
+  ID_TIPO_DOC        Int?
+  DT_LUPD            DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PEDIDO])
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   BigInt    @db.UnsignedBigInt
+  name           String    @db.VarChar(255)
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?   @db.Text
+  last_used_at   DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model profile {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  descricao  String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model rh_cargo {
+  ID_BASE   Int
+  BASE      String @db.VarChar(30)
+  ID_CARGO  Int
+  DESCRICAO String @db.VarChar(30)
+
+  @@id([ID_BASE, ID_CARGO])
+}
+
+model rh_funcionario {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_PESSOA Int
+  ID_CARGO  Int?
+  MATRICULA String?   @db.VarChar(20)
+  FG_ATIVO  String    @default("S") @db.Char(1)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model sessions {
+  id            String  @id @db.VarChar(255)
+  user_id       BigInt? @db.UnsignedBigInt
+  ip_address    String? @db.VarChar(45)
+  user_agent    String? @db.Text
+  payload       String  @db.Text
+  last_activity Int
+
+  @@index([last_activity], map: "sessions_last_activity_index")
+  @@index([user_id], map: "sessions_user_id_index")
+}
+
+model sys_autorizacoes {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_AUTORIZACAO BigInt
+  DESCRICAO_ACAO String    @db.VarChar(250)
+  MOTIVO         String?   @db.VarChar(100)
+  DATA           DateTime  @db.Timestamp(0)
+  ID_EMPRESA     Int?
+  FG_ORIGEM      String    @db.VarChar(3)
+  ID_ORIGEM      BigInt
+  ACAO           String    @default("X") @db.VarChar(10)
+  USUARIOS       String?   @db.VarChar(30)
+  FG_CHK         String    @default("N") @db.Char(1)
+  VALOR          Decimal?  @db.Decimal(15, 2)
+  W_USER         String?   @db.VarChar(15)
+  W_STATION      String?   @db.VarChar(15)
+  W_TCP          Int?
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_AUTORIZACAO])
+}
+
+model sys_parametros {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_REG       Int
+  ID_PARAMETRO String?   @db.VarChar(30)
+  ID_USER      Float?    @db.Float
+  ID_EMPRESA   Int?
+  VALOR        String?   @db.VarChar(100)
+  ID_ESTACAO   String?   @db.VarChar(25)
+  USUARIO      String?   @db.VarChar(15)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model sys_users {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  IDUSER       Int
+  NAME         String    @db.VarChar(15)
+  COMPLETENAME String    @db.VarChar(35)
+  SUPERVISOR   String    @db.Char(1)
+  ULT_EMPRESA  Int?
+  ULT_VISAO    Int?
+  GRUPO        String?   @default("") @db.VarChar(30)
+  EMAIL        String?   @db.VarChar(50)
+  ULT_LOGIN    DateTime? @db.Timestamp(0)
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, IDUSER])
+}
+
+model users {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                      String                      @db.VarChar(255)
+  email                     String                      @unique(map: "users_email_unique") @db.VarChar(255)
+  email_verified_at         DateTime?                   @db.Timestamp(0)
+  password                  String                      @db.VarChar(255)
+  two_factor_secret         String?                     @db.Text
+  two_factor_recovery_codes String?                     @db.Text
+  two_factor_confirmed_at   DateTime?                   @db.Timestamp(0)
+  remember_token            String?                     @db.VarChar(100)
+  current_team_id           BigInt?                     @db.UnsignedBigInt
+  profile_photo_path        String?                     @db.VarChar(2048)
+  created_at                DateTime?                   @db.Timestamp(0)
+  updated_at                DateTime?                   @db.Timestamp(0)
+  profile_id                Int?
+  empresa_id                String?                     @db.VarChar(255)
+  ultima_base_id            String?                     @db.VarChar(255)
+  ari_usuario_configuracoes ari_usuario_configuracoes[]
+}
+
+model vd_campanha {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_CAMPANHA   Int
+  DT_CAMPANHA   DateTime? @db.Timestamp(0)
+  DESCRICAO     String    @db.VarChar(120)
+  QUANTIDADE    Int?
+  RETORNO       Int?
+  DT_AVALIA     DateTime? @db.Timestamp(0)
+  VLR_RETORNO   Decimal?  @db.Decimal(15, 2)
+  COMPLEMENTO   String?   @db.VarChar(800)
+  DT_INI        DateTime? @db.Timestamp(0)
+  DT_FIM        DateTime? @db.Timestamp(0)
+  ID_MARCA      Int?
+  PERC_DESCONTO Decimal?  @db.Decimal(15, 2)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CAMPANHA])
+}
+
+model vd_campanha_itens {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_ITEM     Int
+  ID_CAMPANHA Int
+  ID_PESSOA   Int
+  ID_MIDIA    String?   @db.Char(1)
+  DT_ENVIO    DateTime? @db.Timestamp(0)
+  USUARIO     String?   @db.VarChar(15)
+  ID_PEDIDO   Int?
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ITEM])
+}
+
+model vd_cliente {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_PESSOA         Int
+  FG_ATIVO          String?   @default("S") @db.Char(1)
+  ATUALIZADO        String?   @db.Char(1)
+  NEGATIVADO        String?   @default("N") @db.Char(1)
+  REVENDA           String?   @default("N") @db.Char(1)
+  CONTRATO          String?   @default("N") @db.Char(1)
+  ID_VENDEDOR       Int?
+  ID_RAMO           Int?
+  DIA_VCTO          Decimal?  @db.Decimal(15, 2)
+  TXJUROS           Decimal?  @db.Decimal(15, 2)
+  DT_CONSULTA_SCPC  DateTime? @db.Timestamp(0)
+  LIMITECREDITO     Decimal?  @db.Decimal(15, 2)
+  PRAZOADICIONAL    Decimal?  @db.Decimal(15, 2)
+  NUMERO_CLIENTE    String?   @db.VarChar(10)
+  TP_PRECO          String?   @default("V") @db.Char(1)
+  FG_CONSUMO        String?   @db.Char(1)
+  FG_REMESSA        String?   @default("N") @db.Char(1)
+  FG_COMISSAO       String?   @default("S") @db.Char(1)
+  DIAS_ATRASO       Int?
+  FG_EXCLUSIVO_NFE  String?   @default("N") @db.Char(1)
+  ID_CONTA          Int?
+  ID_TABPRECO       Int?
+  ID_VENCIMENTO     Int?
+  DIAS_AVISO        Int?
+  FG_CLASSIFICACAO  String?   @db.Char(1)
+  ID_CLIENTE_FISCAL Int?
+  DT_ULTL           DateTime? @db.Timestamp(0)
+  DT_ULIB           DateTime? @db.Timestamp(0)
+  DT_PRI_FAT        DateTime? @db.Timestamp(0)
+  VR_PRI_FAT        Decimal?  @db.Decimal(15, 2)
+  NR_PRI_FAT        Decimal?  @db.Decimal(15, 2)
+  DT_ULT_FAT        DateTime? @db.Timestamp(0)
+  VR_ULT_FAT        Decimal?  @db.Decimal(15, 2)
+  NR_ULT_FAT        Decimal?  @db.Decimal(15, 2)
+  DT_MAIOR_FAT      DateTime? @db.Timestamp(0)
+  VR_MAIOR_FAT      Decimal?  @db.Decimal(15, 2)
+  NR_MAIOR_FAT      Decimal?  @db.Decimal(15, 2)
+  VR_MAIOR_ACUMULO  Decimal?  @db.Decimal(15, 2)
+  VR_ACUMULADO      Decimal?  @db.Decimal(15, 2)
+  DT_MAIOR_ATRASO   DateTime? @db.Timestamp(0)
+  MEDIA_ATRASO      Decimal?  @db.Decimal(15, 2)
+  NR_ATRASOS        Decimal?  @db.Decimal(15, 2)
+  NR_MEDIO_VENDA    Decimal?  @db.Decimal(15, 2)
+  VR_CONTRATO       Decimal?  @db.Decimal(15, 2)
+  LOGIN             String?   @db.VarChar(20)
+  SENHA             String?   @db.VarChar(20)
+  MENSAGEM          String?   @db.VarChar(800)
+  OBSERVACAO        String?   @db.Text
+  IMAGEM            Bytes?    @db.Blob
+  ID_ASAAS          String?   @db.VarChar(50)
+  ID_MP             String?   @db.VarChar(50)
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PESSOA])
+}
+
+model vd_condicao {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_CONDICAO   Int
+  DESCRICAO     String    @db.VarChar(40)
+  GERA_BOLETO   String    @default("N") @db.Char(1)
+  FATOR         Float     @default(1)
+  COMPRA        String    @default("N") @db.Char(1)
+  FG_ORCAMENTO  String    @default("N") @db.Char(1)
+  FG_CONSUMIDOR String?   @default("N") @db.Char(1)
+  FG_PROMOCAO   String?   @default("N") @db.Char(1)
+  FG_ATIVO      String    @default("S") @db.Char(1)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CONDICAO])
+}
+
+model vd_condicao_parcs {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_PARCELA  Int
+  ID_CONDICAO Int
+  PRAZO       Float
+  PORCENTAGEM Float
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CONDICAO, ID_PARCELA])
+}
+
+model vd_entrega {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_ENTREGA     Int
+  ID_EMPRESA     Int
+  DT_LANCAMENTO  DateTime  @db.Timestamp(0)
+  DT_ENTREGA     DateTime  @db.Timestamp(0)
+  DOCUMENTO      String?   @db.VarChar(10)
+  USUARIO        String    @db.VarChar(20)
+  FG_FECHADO     DateTime? @db.Timestamp(0)
+  ID_FUNCIONARIO Int?
+  ID_VENDEDOR    Int?
+  OBS            String?   @db.Text
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ENTREGA])
+}
+
+model vd_entrega_itens {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_ENTREGA_ITEM Int
+  ID_ENTREGA      Int
+  ID_ITEM         BigInt
+  QUANTIDADE      Float
+  QTD_ENTREGUE    Float
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ITEM])
+}
+
+model vd_fcp {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_REG    Int
+  ID_ESTADO String    @db.VarChar(2)
+  ALIQ_FCP  Float
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_icm {
+  ID_BASE Int
+  BASE    String    @db.VarChar(30)
+  ID_REG  Int
+  ORIGEM  String    @db.VarChar(2)
+  DESTINO String    @db.VarChar(2)
+  ICMS    Float
+  DT_LUPD DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_meta {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_META     Int
+  ID_EMPRESA  Int
+  ID_VENDEDOR Int?
+  DT_ATU      DateTime  @db.Timestamp(0)
+  ANO         Int
+  MES         Int
+  VR_META     Float
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_META])
+}
+
+model vd_midia {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_MIDIA  Int       @db.SmallInt
+  DESCRICAO String    @db.VarChar(50)
+  FG_ATIVO  String    @default("S") @db.VarChar(1)
+  DT_MIG    DateTime? @db.Timestamp(0)
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_MIDIA])
+}
+
+model vd_nota {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_NOTA           Int
+  MODELO_NF         String?   @default("55") @db.VarChar(2)
+  NR_NOTA           BigInt?
+  SR_NOTA           String?   @db.VarChar(3)
+  TIPO_NOTA         String?   @db.Char(1)
+  DT_NOTA           DateTime  @db.Timestamp(0)
+  DT_SAIDA          DateTime? @db.Timestamp(0)
+  ID_EMPRESA        Int
+  ID_CLIENTE        Int?
+  TIPO_EMISSAO      String?   @db.Char(1)
+  FG_REMESSA        String?   @default("N") @db.Char(1)
+  FG_FINALIDADE     String?   @db.Char(1)
+  CONSUMO_PROPRIO   String?   @default("N") @db.Char(1)
+  REGIME            String?   @db.Char(1)
+  FINANCEIRO        String    @default("N") @db.Char(1)
+  ESTOQUE           String?   @default("N") @db.Char(1)
+  AUTOBAIXA         String?   @default("N") @db.Char(1)
+  USUARIO           String?   @db.VarChar(35)
+  DOCUMENTO         String?   @db.VarChar(25)
+  DT_PREVISAO       DateTime? @db.Timestamp(0)
+  ID_COMPRADOR      Int?
+  ID_TIPO_DOC       Int?
+  ID_CLASSE         Int?
+  ID_TIPO_MOV       Int?
+  ID_TIPO_ESTOQUE   Int?
+  ID_VENDEDOR       Int?
+  ID_CONDICAO       Int?
+  ID_CONTA          Int?
+  ID_PEDIDO         Int?
+  NOME              String    @db.VarChar(50)
+  CNPJ              String?   @db.VarChar(20)
+  ENDERECO          String?   @db.VarChar(100)
+  BAIRRO            String?   @db.VarChar(40)
+  CEP               String?   @db.VarChar(10)
+  FONEFAX           String?   @db.VarChar(20)
+  UF                String?   @db.VarChar(2)
+  INSCRICAO         String?   @db.VarChar(20)
+  ID_TRANSP         Int?
+  TRANSPORTADORA    String?   @db.VarChar(50)
+  TIPO_FRETE        String?   @db.Char(1)
+  PLACA             String?   @db.VarChar(8)
+  UF_PLACA          String?   @db.VarChar(2)
+  CNPJ_TRANSP       String?   @db.VarChar(20)
+  ENDERECO_TRANSP   String?   @db.VarChar(100)
+  UF_TRANSP         String?   @db.VarChar(2)
+  INSCRICAO_TRANSP  String?   @db.VarChar(20)
+  TAXA_COMISSAO     Decimal?  @db.Decimal(15, 2)
+  QUANTIDADE        Decimal?  @db.Decimal(15, 2)
+  ESPECIE           String?   @db.VarChar(10)
+  MARCA             String?   @db.VarChar(20)
+  NUMERO            String?   @db.VarChar(20)
+  PESO_BRUTO        Decimal?  @db.Decimal(15, 2)
+  PESO_LIQUIDO      Decimal?  @db.Decimal(15, 2)
+  CFO               String?   @db.VarChar(15)
+  VR_TOTAL          Float
+  VR_PRODUTOS       Float?    @default(0)
+  VR_DESCONTO       Decimal?  @db.Decimal(15, 2)
+  VR_FRETE          Decimal?  @db.Decimal(15, 2)
+  VR_SEGURO         Decimal?  @db.Decimal(15, 2)
+  VR_DESPESAS       Decimal?  @db.Decimal(15, 2)
+  VR_BASEICMS       Decimal?  @db.Decimal(15, 2)
+  VR_ICMS           Decimal?  @db.Decimal(15, 2)
+  VR_SERVICO        Decimal?  @db.Decimal(15, 2)
+  VR_ISS            Decimal?  @db.Decimal(15, 2)
+  VR_ISENTAS        Decimal?  @db.Decimal(15, 2)
+  VR_OUTRAS         Decimal?  @db.Decimal(15, 2)
+  VR_IPI            Decimal?  @db.Decimal(15, 2)
+  VR_BASESUBS       Decimal?  @db.Decimal(15, 2)
+  VR_ICMSUBS        Decimal?  @db.Decimal(15, 2)
+  ALIQISS           Decimal?  @db.Decimal(15, 2)
+  VR_PIS            Decimal?  @db.Decimal(15, 2)
+  VR_COFINS         Decimal?  @db.Decimal(15, 2)
+  ALIQPIS           Decimal?  @db.Decimal(15, 2)
+  ALIQCOFINS        Decimal?  @db.Decimal(15, 2)
+  ALIQICMS          Decimal?  @db.Decimal(15, 2)
+  ID_ENDERECO       Int?
+  ID_CIDADE         Int?
+  ID_CIDADE_TRANSP  Int?
+  FG_CUPOM          String?   @default("N") @db.Char(1)
+  REFDOC            String?   @db.VarChar(50)
+  MENSAGEM          String?   @db.VarChar(200)
+  OBSERVACAO        String?   @db.Text
+  NATUREZA          String?   @db.VarChar(60)
+  VERSAO            Decimal?  @db.Decimal(15, 2)
+  CHAVE_ACESSO      String?   @db.VarChar(50)
+  DT_NFE            DateTime? @db.Timestamp(0)
+  ID_LOTE_ENVIO     String?   @db.VarChar(20)
+  ID_RECEBIMENTO    String?   @db.VarChar(20)
+  ID_CANCELAMENTO   String?   @db.VarChar(20)
+  FG_DANFE          String    @default("N") @db.Char(1)
+  FG_MAIL           String    @default("N") @db.Char(1)
+  FG_SITUACAO       String    @default("N") @db.Char(1)
+  MUNICIPIO         String?   @db.VarChar(40)
+  MUNICIPIO_TRANSP  String?   @db.VarChar(40)
+  ID_PAIS           Int?      @default(1)
+  PAIS              String?   @db.VarChar(30)
+  CODPAIS           String?   @db.VarChar(5)
+  VR_VBCFCP         Decimal?  @db.Decimal(15, 2)
+  P_FCP             Decimal?  @db.Decimal(15, 2)
+  VR_FCP            Decimal?  @db.Decimal(15, 2)
+  VR_BCFCPST        Decimal?  @db.Decimal(15, 2)
+  P_FCPST           Decimal?  @db.Decimal(15, 2)
+  VR_FCPST          Decimal?  @db.Decimal(15, 2)
+  VR_BCFCPSTRET     Decimal?  @db.Decimal(15, 2)
+  P_FCPSTRET        Decimal?  @db.Decimal(15, 2)
+  VR_FCPSTRET       Decimal?  @db.Decimal(15, 2)
+  FN_ATIVO          String?   @default("S") @db.Char(1)
+  FN_SINAL          String?   @default("+") @db.Char(1)
+  DT_ULT_ENVIO      DateTime? @db.Timestamp(0)
+  DT_EM_ENVIO       DateTime? @db.Timestamp(0)
+  VR_BCII           Decimal?  @db.Decimal(15, 2)
+  VR_II             Decimal?  @db.Decimal(15, 2)
+  VR_IOF            Decimal?  @db.Decimal(15, 2)
+  NDI               String?   @db.VarChar(20)
+  DT_DI             DateTime? @db.Date
+  DT_DESEMBARQUE    DateTime? @db.Date
+  ID_EXPORTADOR     Int?
+  ID_END_EXPORTADOR Int?
+  CNPJ_EXPORTADOR   String?   @db.VarChar(14)
+  UF_DESEMB         String?   @db.VarChar(2)
+  LOC_DESEMB        String?   @db.VarChar(40)
+  ID_VIATRANSP      Int?      @db.SmallInt
+  ID_TPINTERMEDIO   Int?      @db.SmallInt
+  FG_IBPT           String?   @default("S") @db.Char(1)
+  VR_IPIDEVOL       Decimal?  @db.Decimal(15, 2)
+  IND_INTERMED      Int?
+  VR_ICMSDESON      Decimal?  @db.Decimal(15, 2)
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_NOTA])
+}
+
+model vd_nota_evento {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_NOTA_EVENTO Int
+  ID_NOTA        Int
+  SERIE          Int
+  DATA           DateTime? @db.Timestamp(0)
+  PROTOCOLO      String?   @db.VarChar(15)
+  DESCRICAO      String    @db.VarChar(1000)
+  TIPO           String    @db.VarChar(6)
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_NOTA_EVENTO])
+}
+
+model vd_nota_itens {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_REG           BigInt
+  ID_PEDIDO_ITENS  BigInt?
+  ID_LANCTO_EST    BigInt?
+  ID_NOTA          Int
+  ID_PRODUTO       Int?
+  ITEM             Int
+  SEQUENCIA        Int
+  CODIGO           String?   @db.VarChar(15)
+  QUANTIDADE       Float
+  DESCRICAO        String?   @db.VarChar(120)
+  CFO              String?   @db.VarChar(4)
+  ORIGEM           String?   @db.Char(1)
+  INDTOT           String?   @db.Char(1)
+  UNIDADE          String?   @db.VarChar(6)
+  GTIN             String?   @db.VarChar(14)
+  NCM              String?   @db.VarChar(12)
+  SITUACAO_TRIB    String?   @db.VarChar(3)
+  ALIQ_SUBS        Decimal?  @db.Decimal(15, 2)
+  ALIQUOTA_ICM     Decimal?  @db.Decimal(15, 2)
+  ALIQUOTA_IPI     Decimal?  @db.Decimal(15, 2)
+  BASE_SUBS        Decimal?  @db.Decimal(15, 2)
+  COMISSAO         Decimal?  @db.Decimal(15, 2)
+  MARG_SUBS        Decimal?  @db.Decimal(15, 2)
+  MODICM           String?   @db.Char(1)
+  MODICMST         String?   @db.Char(1)
+  PERREDU          Decimal?  @db.Decimal(15, 2)
+  VR_BASEICM       Float
+  VR_CADASTRO      Float
+  VR_COMPRA        Float
+  VR_ICM           Float
+  VR_SEGURO        Float
+  VR_SUBS          Float
+  VR_FRETE         Float
+  VR_DESCONTO      Float
+  VR_DESPESA       Float
+  VR_UNITARIO      Float
+  VR_TOTAL         Float
+  ID_REPORT_SCRIPT Int?
+  VR_IPI           Float     @default(0)
+  VR_PIS           Float     @default(0)
+  VR_COFINS        Float     @default(0)
+  ANP              String?   @db.VarChar(9)
+  OBSERVACOES      String?   @db.VarChar(500)
+  CSTPIS           String?   @db.VarChar(2)
+  CSTCOFINS        String?   @db.VarChar(2)
+  CSTIPI           String?   @db.VarChar(2)
+  VR_PAUTA         Decimal?  @db.Decimal(15, 2)
+  CEST             String?   @db.VarChar(7)
+  VR_VBCFCP        Decimal?  @db.Decimal(15, 2)
+  P_FCP            Decimal?  @db.Decimal(15, 2)
+  VR_FCP           Decimal?  @db.Decimal(15, 2)
+  VR_BCFCPST       Decimal?  @db.Decimal(15, 2)
+  P_FCPST          Decimal?  @db.Decimal(15, 2)
+  VR_FCPST         Decimal?  @db.Decimal(15, 2)
+  VR_BCFCPSTRET    Decimal?  @db.Decimal(15, 2)
+  P_FCPSTRET       Decimal?  @db.Decimal(15, 2)
+  VR_FCPSTRET      Decimal?  @db.Decimal(15, 2)
+  VR_BCII          Decimal?  @db.Decimal(15, 2)
+  VR_II            Decimal?  @db.Decimal(15, 2)
+  VR_IOF           Decimal?  @db.Decimal(15, 2)
+  VR_ICMSDESON     Decimal?  @db.Decimal(15, 2)
+  MOTDESICMS       Int?      @db.SmallInt
+  XPED             String?   @db.VarChar(15)
+  NITEMPED         Int?      @db.SmallInt
+  CBENEF           String?   @db.VarChar(8)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+  FG_SELNF         String    @default("N") @db.Char(1)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_nota_parcela {
+  ID_BASE    Int
+  BASE       String    @db.VarChar(30)
+  ID_REG     BigInt
+  ID_NOTA    Int
+  PARCELA    Int
+  VENCIMENTO DateTime  @db.Timestamp(0)
+  VALOR      Float
+  ID_RECEBER Int?
+  PAGAMENTO  DateTime? @db.Timestamp(0)
+  LANCAMENTO DateTime  @db.Timestamp(0)
+  DOCUMENTO  String?   @db.VarChar(20)
+  DT_LUPD    DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_nota_pedido {
+  ID_BASE   Int
+  BASE      String    @db.VarChar(30)
+  ID_NOTA   Int
+  ID_PEDIDO Int
+  ID_REG    Int
+  DT_LUPD   DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_otctrlente {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_CTRLENTE     Int
+  ID_ITEM         BigInt?
+  DESDOBRAMENTO   String    @default("A") @db.Char(1)
+  LOJ_CLI         String?   @default("L") @db.Char(1)
+  FG_AUTO         String?   @db.Char(1)
+  IDENT           String    @default("") @db.VarChar(8)
+  DT_LANCAMENTO   DateTime  @db.DateTime(0)
+  ID_EMPRESA      Int
+  ID_LABORATORIO  Int?
+  ID_MONTADOR     Int?
+  DT_LABSAI       DateTime? @db.DateTime(0)
+  DT_PREVISAO     DateTime? @db.DateTime(0)
+  VR_LAB          Float?    @default(0)
+  VR_MONTAGEM     Float?    @default(0)
+  ID_ITEM_ARMACAO BigInt?
+  QUANTIDADE      Float     @default(0)
+  FG_FECHADO      DateTime? @db.DateTime(0)
+  DT_LAB_ENTREGA  DateTime? @db.DateTime(0)
+  DT_MNT_ENTREGA  DateTime? @db.DateTime(0)
+  ID_NF_COMPRA    BigInt?
+  ID_NF_MONTAGEM  Int?
+  ID_IT_COMPRA    BigInt?
+  NFLAB           String?   @db.VarChar(50)
+  NFMONTAGEM      String?   @db.VarChar(50)
+  OBS             String?   @db.Text
+  DT_LJ_ENTREGA   DateTime? @db.DateTime(0)
+  DT_LJ_CONFERE   DateTime? @db.DateTime(0)
+  LAB_DOC         String?   @db.VarChar(20)
+  FG_CSTLAB       String    @default("S") @db.Char(1)
+  FG_CSTMNT       String    @default("S") @db.Char(1)
+  VOUCHER         String?   @db.VarChar(30)
+  ANALISE_TECNICA String?   @db.VarChar(300)
+  CAMPANHA        String?   @db.VarChar(100)
+  OD_PRECO        Decimal?  @default(0.00) @db.Decimal(14, 2)
+  OE_PRECO        Decimal?  @default(0.00) @db.Decimal(14, 2)
+  SRV_PRECO       Decimal?  @default(0.00) @db.Decimal(14, 2)
+  API             String?   @db.VarChar(500)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_CTRLENTE])
+}
+
+model vd_otreceita {
+  ID_BASE           Int
+  BASE              String    @db.VarChar(30)
+  ID_RECEITA        Int
+  ID_PEDIDO         Int?
+  LG_OD_ESF         Decimal?  @db.Decimal(15, 2)
+  LG_OD_CIL         Decimal?  @db.Decimal(15, 2)
+  LG_OD_EIX         Int?
+  LG_OD_DNP         Decimal?  @db.Decimal(15, 2)
+  LG_OD_PRISMA      Int?
+  LG_OE_ESF         Decimal?  @db.Decimal(15, 2)
+  LG_OE_CIL         Decimal?  @db.Decimal(15, 2)
+  LG_OE_EIX         Int?
+  LG_OE_DNP         Decimal?  @db.Decimal(15, 2)
+  LG_OE_PRISMA      Int?
+  PT_OD_ESF         Decimal?  @db.Decimal(15, 2)
+  PT_OD_CIL         Decimal?  @db.Decimal(15, 2)
+  PT_OD_EIX         Int?
+  PT_OD_DNP         Decimal?  @db.Decimal(15, 2)
+  PT_OE_ESF         Decimal?  @db.Decimal(15, 2)
+  PT_OE_CIL         Decimal?  @db.Decimal(15, 2)
+  PT_OE_EIX         Int?
+  PT_OE_DNP         Decimal?  @db.Decimal(15, 2)
+  OBS               String?   @db.Text
+  ADICAO            Decimal?  @db.Decimal(15, 2)
+  LG_OD_ALT         Decimal?  @db.Decimal(15, 2)
+  LG_OE_ALT         Decimal?  @db.Decimal(15, 2)
+  TIPO              String    @default("D") @db.Char(1)
+  CURVAK_OD         Decimal?  @db.Decimal(15, 2)
+  CURVAM_OD         Decimal?  @db.Decimal(15, 2)
+  EIXO_OD           Int?
+  CURVAK_OE         Decimal?  @db.Decimal(15, 2)
+  CURVAM_OE         Decimal?  @db.Decimal(15, 2)
+  EIXO_OE           Int?
+  CURVAB_OD         Decimal?  @db.Decimal(15, 2)
+  DIAMETRO_OD       Decimal?  @db.Decimal(15, 2)
+  CURVAB_OE         Decimal?  @db.Decimal(15, 2)
+  DIAMETRO_OE       Decimal?  @db.Decimal(15, 2)
+  ARM_PONTE         Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_H         Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_V         Decimal?  @db.Decimal(15, 2)
+  ARM_ARO_D         Decimal?  @db.Decimal(15, 2)
+  ID_PRODUTO        Int?
+  ADICAO_OE         Decimal?  @db.Decimal(15, 2)
+  DT_RECEITA        DateTime? @db.Date
+  ID_LENTE          Int?
+  ID_PESSOA         Int?
+  ITEM              Int?      @db.SmallInt
+  FG_MONTAGEM       Int?      @default(1) @db.SmallInt
+  FG_LUZAZUL        Int?      @default(0) @db.SmallInt
+  FG_GARANTIA       Int       @default(0) @db.SmallInt
+  GARANTIA_TIPO     String?   @db.VarChar(50)
+  GARANTIA_MOTIVO   String?   @db.VarChar(100)
+  GARANTIA_EST      String?   @db.VarChar(50)
+  ARM_HASTE_DIST    Int?      @db.SmallInt
+  ARM_FRONTAL_DIST  Int?      @db.SmallInt
+  ARM_ANGULO_PANO   Float?
+  INCL_PANTOSCOPICA Int?      @db.SmallInt
+  DIST_VERTICE      Decimal?  @db.Decimal(10, 2)
+  FRAME_FIT         Decimal?  @db.Decimal(10, 2)
+  GRAVACAO_INDLVL   String?   @db.VarChar(30)
+  OD_AFIN_PRISM     Decimal?  @db.Decimal(10, 2)
+  OE_AFIN_PRISM     Decimal?  @db.Decimal(10, 2)
+  OD_ESP_MIN_BORDA  Decimal?  @db.Decimal(10, 2)
+  OE_ESP_MIN_BORDA  Decimal?  @db.Decimal(10, 2)
+  OD_ESP_MIN_CENTRO Decimal?  @db.Decimal(10, 2)
+  OE_ESP_MIN_CENTRO Decimal?  @db.Decimal(10, 2)
+  OD_ESP_MIN_FURO   Decimal?  @db.Decimal(10, 2)
+  OE_ESP_MIN_FURO   Decimal?  @db.Decimal(10, 2)
+  ID_TP_ARMACAO     Int?      @db.SmallInt
+  ID_ARO            Int?      @db.SmallInt
+  VOUCHER           String?   @db.VarChar(50)
+  GARANTIA          String?   @db.VarChar(50)
+  OD_BASE           Decimal?  @db.Decimal(6, 2)
+  OE_BASE           Decimal?  @db.Decimal(6, 2)
+  OD_DIAMETRO       Decimal?  @db.Decimal(10, 2)
+  OE_DIAMETRO       Decimal?  @db.Decimal(10, 2)
+  OD_VIRTUAL        Int       @default(0) @db.SmallInt
+  OE_VIRTUAL        Int       @default(0) @db.SmallInt
+  FG_PRISMA         Int       @default(0) @db.SmallInt
+  OD_PRISMA_EIXO    Int?      @db.SmallInt
+  OE_PRISMA_EIXO    Int?      @db.SmallInt
+  FG_AMOSTRA_COR    Int       @default(0) @db.SmallInt
+  ID_COR            Int?      @db.SmallInt
+  DISTANCIA_VISAO   Int?      @db.SmallInt
+  ATIV_PRINCIPAL    String?   @db.VarChar(30)
+  FG_BASE           Int       @default(0) @db.SmallInt
+  ARM_TIPO          String?   @db.VarChar(1)
+  DT_LUPD           DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_RECEITA])
+}
+
+model vd_pedido {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_PEDIDO        Int
+  DOCUMENTO        String    @db.VarChar(15)
+  NTALAO           String?   @db.VarChar(20)
+  DT_PEDIDO        DateTime  @db.Timestamp(0)
+  DT_PREVISAO      DateTime  @db.Timestamp(0)
+  DT_ENTREGA       DateTime? @db.Timestamp(0)
+  USUARIO          String    @db.VarChar(15)
+  ESTOQUE          String    @db.Char(1)
+  FINANCEIRO       String    @db.Char(1)
+  FECHADO          String?   @default("N") @db.Char(1)
+  MARCADO          String    @default("N") @db.Char(1)
+  NOTA             String?   @default("N") @db.Char(1)
+  FG_VALEPAG       String?   @default("N") @db.Char(1)
+  ID_EMPRESA       Int
+  ID_VENDEDOR      Int
+  ID_VENDEDOR2     Int?
+  ID_CLIENTE       Int
+  ID_CLIENTE_FIN   Int?
+  ID_ENDERECO      Int?
+  ID_MEDICO        Int?
+  ID_ORCAMENTO     Int?
+  ID_CONTA         Int
+  ID_CONDICAO      Int
+  ID_TAB_PRECO     Int?
+  ID_COMPRADOR     Int?
+  ID_CARGA         Int?
+  ID_CLASSE        Int
+  ID_ECF           Int?
+  ID_ROMANEIO      Int?
+  ID_COMANDA       Int?
+  VR_TOTAL         Float     @default(0)
+  VR_DESCONTO      Float?    @default(0)
+  VR_ACRESCIMO     Float?    @default(0)
+  VR_PAGO          Float?    @default(0)
+  VR_FRETE         Float?    @default(0)
+  VR_TOT_ITEM      Float?    @default(0)
+  VR_TOT_SERV      Float?    @default(0)
+  VR_TROCO         Float?    @default(0)
+  VR_DINHEIRO      Float?    @default(0)
+  VR_CHEQUE        Float?    @default(0)
+  VR_CARTAO        Float?    @default(0)
+  VR_CONVENIO      Float?    @default(0)
+  VR_CREDIARIO     Float?    @default(0)
+  VR_DEVOLUCAO     Float?    @default(0)
+  VR_CREDITO       Float?    @default(0)
+  VR_ARREDONDA     Float?    @default(0)
+  VR_TOT_COMPRA    Float?    @default(0)
+  COMISSAO         Float?    @default(0)
+  COMISSAOMED      Float?    @default(0)
+  ID_PAGAR         Int?
+  SEQ_ROMANEIO     Int?
+  TX_CONDICAO      Decimal?  @db.Decimal(15, 2)
+  TX_VISTA         Decimal?  @db.Decimal(15, 2)
+  PESO_LIQUIDO     Float?    @default(0)
+  PESO_BRUTO       Float?    @default(0)
+  OBS              String?   @db.Text
+  FG_DT_COMIS      DateTime? @db.Timestamp(0)
+  FG_US_COMIS      String?   @db.VarChar(15)
+  NOTA_CLIFIN      String    @default("C") @db.Char(1)
+  VR_BASE_COM      Decimal?  @db.Decimal(15, 2)
+  FG_ENCOMENDA     String?   @default("N") @db.Char(1)
+  FG_CARDTPDESC    String    @default("N") @db.VarChar(1)
+  FG_NFREEMBOLSO   String    @default("N") @db.Char(1)
+  FG_RETIFICACAO   String    @default("N") @db.Char(1)
+  ID_TPRETIFICACAO Int?
+  FG_MED_INDICA    String    @default("N") @db.Char(1)
+  WEB_ID           String?   @db.VarChar(35)
+  WEB_SOURCE_ID    String?   @db.VarChar(35)
+  WEB_ORDER_CID    String?   @db.VarChar(35)
+  WEB_FG_UPD       DateTime? @db.Timestamp(0)
+  WEB_STATUS       String?   @db.VarChar(10)
+  VR_DESCONTOR     Float?    @default(0)
+  FG_FLAG          Int?      @db.SmallInt
+  ID_COURIER       Int?
+  ATD_NOTA         Int?      @db.SmallInt
+  ATD_TP_NOTA      String?   @db.VarChar(10)
+  ID_COURIERA      Int?
+  DT_ORCAMENTO     DateTime? @db.Timestamp(0)
+  FG_VTD           String?   @db.Char(1)
+  UID_BONUS        String?   @db.VarChar(100)
+  VR_DESC_PROMO    Decimal   @default(0.00) @db.Decimal(15, 2)
+  VR_CASHBACK      Decimal?  @default(0.00) @db.Decimal(15, 2)
+  ID_PROMOCAO      Int?
+  ID_CAMPANHA      Int?
+  ID_MIDIA         Int?      @db.SmallInt
+  MIDIA_OBS        String?   @db.VarChar(50)
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PEDIDO])
+}
+
+model vd_pedido_itens {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_ITEM         BigInt
+  ITEM            Int?
+  ID_PEDIDO       Int
+  ID_PRODUTO      Int?
+  FG_CUSTO        String    @default("P") @db.Char(1)
+  QUANTIDADE      Float
+  VR_UNITARIO     Float
+  VR_CADASTRO     Float
+  VR_COMPRA       Float
+  VR_TABELA       Float
+  ID_LANCTO_EST   BigInt?
+  DESCONTO_UNIT   Decimal?  @db.Decimal(15, 2)
+  TIPO_DEVOLUCAO  String?   @db.Char(1)
+  ID_TIPOEST_DEV  Int?
+  ID_VENDEDOR     Int?
+  QTD_ENTREGUE    Float     @default(0)
+  FG_ENTREGUE     String    @default("N") @db.Char(1)
+  ID_EMBALAGEM    Int?
+  QTD_EMBALAGEM   Decimal?  @db.Decimal(15, 2)
+  INFO            String?   @db.VarChar(255)
+  UNIDADE         String?   @db.VarChar(6)
+  ID_GRADE        Int?
+  VR_DESCONTO     Float
+  ALIQIBPT        Decimal?  @db.Decimal(15, 2)
+  QTD_ENTREGAR    Float?    @default(0)
+  ID_PRODUCAO     Int?
+  ID_EST_ENTG     BigInt?
+  FG_PROMOCAO     String?   @db.Char(1)
+  FG_TIPOCOMISSAO String?   @db.VarChar(2)
+  ID_FUNCIONARIO  Int?
+  ID_ITEM_DEV     BigInt?
+  LOTE            Int?
+  ID_LOTE         Int?
+  COMISSAO        Decimal?  @db.Decimal(15, 2)
+  COMISSAO2       Decimal?  @db.Decimal(15, 2)
+  FG_FIXAPRECO    String?   @db.Char(1)
+  DESCRICAO       String?   @db.VarChar(120)
+  MARGEM          Decimal?  @db.Decimal(15, 2)
+  ID_PROMOCAO     Int?
+  VR_DESCONTOR    Float?    @default(0)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_ITEM])
+}
+
+model vd_promocao {
+  ID_BASE          Int
+  BASE             String    @db.VarChar(30)
+  ID_PROMOCAO      Int
+  DESCRICAO        String    @db.VarChar(50)
+  DT_INI           DateTime  @db.Timestamp(0)
+  DT_FIM           DateTime? @db.Timestamp(0)
+  FG_INATIVO       DateTime? @db.Timestamp(0)
+  MARGEM_PROMO     Float?    @db.Float
+  MARGEM_COMIS     Float?    @db.Float
+  GUELTA           Float?    @db.Float
+  ID_GRUPO         String?   @db.VarChar(400)
+  ID_MARCA         String?   @db.VarChar(400)
+  ID_PRODUTO       String?   @db.VarChar(4000)
+  TP_GRUPO         String    @default("00") @db.VarChar(2)
+  TP_MARCA         String    @default("00") @db.VarChar(2)
+  TP_PRODUTO       String    @default("00") @db.VarChar(2)
+  QTD_PROMO        Int?
+  QTD_PROMO_LIMITE Int?
+  VALOR_PROMO      Decimal?  @db.Decimal(15, 2)
+  ID_EMPRESA       Int?
+  DESCONTO_FIXO    Decimal?  @db.Decimal(15, 2)
+  TP_PROMO         Int       @default(1) @db.SmallInt
+  DT_LUPD          DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_PROMOCAO])
+}
+
+model vd_tabpreco {
+  ID_BASE         Int
+  BASE            String    @db.VarChar(30)
+  ID_TABPRECO     Int
+  TIPO            String    @default("F") @db.Char(1)
+  ACEITA_PROMOCAO String    @default("N") @db.Char(1)
+  ACEITA_DESCONTO String    @default("N") @db.Char(1)
+  DESCRICAO       String    @db.VarChar(30)
+  FORMULA         String?   @db.Text
+  PERCENT_MAXDESC Decimal?  @db.Decimal(15, 2)
+  ALTERAR_PRECO   String?   @default("N") @db.Char(1)
+  FG_ATIVO        String?   @default("S") @db.Char(1)
+  DT_LUPD         DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TABPRECO])
+}
+
+model vd_talao_ctr {
+  ID_BASE        Int
+  BASE           String    @db.VarChar(30)
+  ID_TALAO_CTR   Int
+  DT_LANCAMENTO  DateTime  @db.Timestamp(0)
+  TALAO_INI      Int
+  TALAO_FIM      Int
+  TOT_CANCELADOS Int?
+  FG_FECHADO     DateTime? @db.Timestamp(0)
+  ID_EMPRESA     Int
+  ID_VENDEDOR    Int?
+  ID_ESTOQUE     Int
+  PREFIXO        String?   @default("") @db.VarChar(3)
+  USUARIO        String    @db.VarChar(15)
+  USUARIO_FCH    String?   @db.VarChar(15)
+  SUFIXO         String?   @db.VarChar(3)
+  DT_LUPD        DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_TALAO_CTR])
+}
+
+model vd_talao_itens {
+  ID_BASE      Int
+  BASE         String    @db.VarChar(30)
+  ID_TALAO_CTR Int
+  ID_TALAO     Int
+  CTALAO       String    @db.VarChar(10)
+  CANCELADO    DateTime? @db.Timestamp(0)
+  USUARIO      String?   @db.VarChar(15)
+  ID_PEDIDO    Int?
+  MOTIVO       String?   @db.VarChar(50)
+  ID_REG       Int
+  DT_LUPD      DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+model vd_vendedor {
+  ID_BASE       Int
+  BASE          String    @db.VarChar(30)
+  ID_VENDEDOR   Int
+  ID_PESSOA     Int
+  ID_USER       Int?
+  TAXA          Decimal?  @db.Decimal(15, 2)
+  BLOQUEADO     String    @default("N") @db.Char(1)
+  FUNCAO        String    @default("V") @db.Char(1)
+  TX_VL         String    @default("T") @db.Char(1)
+  TAXA_DIF      Decimal?  @db.Decimal(15, 2)
+  DT_LANCAMENTO DateTime? @db.Timestamp(0)
+  USUARIO       String?   @db.VarChar(15)
+  DT_LUPD       DateTime? @db.Timestamp(0)
+  CD_INTERNO    String?   @db.VarChar(30)
+
+  @@id([ID_BASE, ID_VENDEDOR])
+}
+
+model vd_vendedor_empresa {
+  ID_BASE     Int
+  BASE        String    @db.VarChar(30)
+  ID_VENDEDOR Int
+  ID_EMPRESA  Int
+  TAXAE       Decimal?  @db.Decimal(15, 2)
+  ID_REG      Int
+  DT_LUPD     DateTime? @db.Timestamp(0)
+
+  @@id([ID_BASE, ID_REG])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_luxottica {
+  BRAND                String?  @db.VarChar(50)
+  MODEL                String?  @db.VarChar(50)
+  CSIZE                String?  @db.VarChar(20)
+  COLOR                String?  @db.VarChar(20)
+  GRID                 String?  @db.VarChar(20)
+  SKU                  String?  @db.VarChar(50)
+  EAN                  String   @db.VarChar(20)
+  NCM                  String?  @db.VarChar(12)
+  CST                  String?  @db.VarChar(1)
+  CLOCAL               String?  @db.VarChar(50)
+  SUN_OPT              String?  @db.VarChar(20)
+  MATERIAL             String?  @db.VarChar(20)
+  FRAME_SHAPE          String?  @db.VarChar(20)
+  GENDER               String?  @db.VarChar(20)
+  POLAR_LENS           String?  @db.VarChar(10)
+  RBA_ONLY_RAYBAN      String?  @db.VarChar(30)
+  RBA_PRMIN            String?  @db.VarChar(30)
+  RBA_PRMAX            String?  @db.VarChar(30)
+  LENS_TYPE            String?  @db.VarChar(30)
+  COMMERCIAL_NAME      String?  @db.VarChar(30)
+  CSEGMENT             String?  @db.VarChar(35)
+  WHO_PRICE            Decimal? @db.Decimal(14, 2)
+  RET_PRICE            Decimal? @db.Decimal(14, 2)
+  VAL_START_DATE       String?  @db.VarChar(10)
+  MOD_LAUNCH           String?  @db.VarChar(10)
+  SKU_LAUNCH           String?  @db.VarChar(10)
+  CRELEASE             String?  @db.VarChar(20)
+  NEW_MODEL_REFRESH    String?  @db.VarChar(30)
+  DISTRIBUTION_SEGMENT String?  @db.VarChar(30)
+  FIRST_SHIPPING_DATE  String?  @db.VarChar(10)
+  FSD_BPF              String?  @db.VarChar(10)
+  FSD_BP               String?  @db.VarChar(10)
+  FSD_PF               String?  @db.VarChar(10)
+  FSD_P                String?  @db.VarChar(10)
+  FSD_D                String?  @db.VarChar(10)
+  ADVERTISING          String?  @db.VarChar(3)
+  START_DATE_ADV       String?  @db.VarChar(10)
+  FINISH_DATE_ADV      String?  @db.VarChar(10)
+  EXTRA1               String?  @db.VarChar(15)
+  GED                  String?  @db.VarChar(15)
+  CONFIRMED            String?  @db.VarChar(15)
+  PERIOD               String?  @db.VarChar(15)
+  ID_FONTE             Int      @db.SmallInt
+  UID_GRP              String?  @db.VarChar(2)
+  GENERO               String?  @db.VarChar(1)
+
+  @@ignore
 }
